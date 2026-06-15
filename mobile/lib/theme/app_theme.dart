@@ -33,7 +33,7 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
     primaryColor: primaryColor,
-    scaffoldBackgroundColor: darkBackgroundColor,
+    scaffoldBackgroundColor: AppTheme.darkBackgroundColor,
     colorScheme: const ColorScheme.dark(
       primary: primaryColor,
       secondary: secondaryColor,
