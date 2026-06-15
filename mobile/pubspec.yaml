@@ -1,0 +1,24 @@
+﻿name: bedtime_story_app
+description: AI睡前故事应用
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_tts: ^3.8.5
+  google_fonts: ^6.1.0
+  shared_preferences: ^2.2.2
+  path_provider: ^2.1.1
+  dio: ^5.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,34 @@
+﻿# Flutter
+mobile/.dart_tool/
+mobile/.packages
+mobile/build/
+mobile/pubspec.lock
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+
+# Android
+mobile/android/local.properties
+mobile/android/.gradle/
+mobile/android/app/build/
+
+# iOS
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/App.framework
+mobile/ios/Flutter/Flutter.framework
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Python
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/instance/
+backend/.env
+
+# OS
+.DS_Store
+Thumbs.db
