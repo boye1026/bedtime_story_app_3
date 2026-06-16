@@ -193,7 +193,7 @@ def get_story(story_id):
     return _success_response(data=story.to_dict())
 
 
-@story_bp.route("/stories", methods=["GET"])
+@story_bp.route("/story/list", methods=["GET"])
 def get_stories():
     """
     获取用户故事列表（分页）

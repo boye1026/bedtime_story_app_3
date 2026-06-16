@@ -49,10 +49,47 @@ def create_app(config_class=None):
     from app.services.ai_service import ai_service
     ai_service.init_app(app)
 
-    # 注册错误处理
+    # 注册全局错误处理器
     _register_error_handlers(app)
 
+    # 注册健康检查接口
+    _register_routes(app)
+
     return app
+
+
+def _register_routes(app):
+    """注册额外的全局路由"""
+    @app.route("/health")
+    def health_check():
+        """健康检查接口"""
+        return {
+            "code": 200,
+            "message": "success",
+            "data": {
+                "status": "healthy",
+                "service": "bedtime-story-api",
+                "version": "1.0.0"
+            }
+        }, 200
+
+    @app.route("/")
+    def index():
+        """首页信息"""
+        return {
+            "code": 200,
+            "message": "欢迎使用 AI 睡前故事 API",
+            "data": {
+                "version": "1.0.0",
+                "endpoints": {
+                    "health": "/health",
+                    "auth": "/api/auth/*",
+                    "user": "/api/user/*",
+                    "story": "/api/story/*",
+                    "membership": "/api/membership/*",
+                }
+            }
+        }, 200
 
 
 def _register_error_handlers(app):

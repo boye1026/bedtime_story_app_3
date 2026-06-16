@@ -20,14 +20,15 @@ class StoryService:
     封装故事生成、查询、删除等业务逻辑
     """
 
-    def __init__(self, ai_service=None):
-        """
-        初始化故事服务
+    def __init__(self):
+        """初始化故事服务（使用全局 ai_service 实例）"""
+        pass
 
-        Args:
-            ai_service: AI 服务实例，如果为 None 则创建新实例
-        """
-        self.ai_service = ai_service
+    @property
+    def ai_service(self):
+        """获取 AI 服务实例（懒加载，使用全局 ai_service 单例）"""
+        from app.services.ai_service import ai_service
+        return ai_service
 
     def generate_story(self, user, child_info, story_style="fairy_tale",
                        directions=None, is_premium=False):

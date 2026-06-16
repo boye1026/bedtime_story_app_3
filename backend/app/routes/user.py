@@ -68,6 +68,41 @@ def get_free_count():
     })
 
 
+@user_bp.route("/info", methods=["GET"])
+def get_user_info():
+    """
+    获取用户信息和VIP状态
+    ---
+    响应:
+        {
+            "code": 200,
+            "message": "success",
+            "data": {
+                "id": 1,
+                "nickname": "小读者",
+                "is_vip": false,
+                "remaining_free_count": 1,
+                "vip_expire_date": null
+            }
+        }
+    """
+    user = _get_current_user()
+    if not user:
+        return _error_response("未提供用户ID，请先登录", code=401)
+
+    # 调用 can_generate 自动处理跨天重置
+    user.can_generate()
+
+    return _success_response(data={
+        "id": user.id,
+        "nickname": user.nickname,
+        "avatar_url": user.avatar_url,
+        "is_vip": user.is_vip,
+        "remaining_free_count": user.free_count_today,
+        "vip_expire_date": user.vip_expire_date.isoformat() if user.vip_expire_date else None,
+    })
+
+
 @user_bp.route("/ad-reward", methods=["POST"])
 def ad_reward():
     """

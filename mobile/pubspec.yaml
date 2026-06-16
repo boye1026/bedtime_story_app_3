@@ -1,10 +1,10 @@
-﻿name: bedtime_story_app
-description: AI睡前故事应用
+name: bedtime_story_app
+description: AI 睡前故事应用 - 为孩子定制专属的睡前故事
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: "">=3.12.0 <4.0.0""
+  sdk: ">=3.12.0 <4.0.0"
 
 dependencies:
   flutter:

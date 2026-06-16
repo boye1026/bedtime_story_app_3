@@ -1,0 +1,99 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+
+      - name: Syntax check
+        working-directory: backend
+        run: python -c "
+import ast, os
+
+errors = []
+for root, dirs, files in os.walk('.'):
+    if '__pycache__' in dirs:
+        dirs.remove('__pycache__')
+    for f in files:
+        if f.endswith('.py'):
+            path = os.path.join(root, f)
+            try:
+                with open(path, encoding='utf-8') as fp:
+                    ast.parse(fp.read())
+            except SyntaxError as e:
+                errors.append(f'{path}: {e}')
+            except Exception as e:
+                errors.append(f'{path}: ENCODING - {e}')
+
+if errors:
+    for e in errors:
+        print(f'FAIL: {e}')
+        exit(1)
+else:
+    print('✅ All Python files are syntactically correct')
+"
+
+      - name: Flake8 linting
+        working-directory: backend
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+
+      - name: Verify module imports
+        working-directory: backend
+        run: python -c "
+import sys
+sys.path.insert(0, '.')
+
+modules = ['app.models.user', 'app.models.story', 'app.models.membership', 
+           'app.services.ai_service', 'app.services.story_service', 
+           'app.services.membership_service', 'app.templates.story_prompts']
+
+for m in modules:
+    try:
+        __import__(m)
+        print(f'OK: {m}')
+    except Exception as e:
+        print(f'FAIL: {m} - {e}')
+        exit(1)
+
+print('✅ All modules imported successfully')
+"

@@ -1,6 +1,5 @@
-﻿import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_theme.dart';
+import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 import '../widgets/star_animation.dart';
 
 class HomePage extends StatelessWidget {
@@ -9,43 +8,32 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.primaryColor.withOpacity(0.1),
-              Colors.white,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(context),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      _buildWelcomeSection(),
-                      const SizedBox(height: 30),
-                      _buildMainButtons(context),
-                      const SizedBox(height: 30),
-                      _buildRecommendedStories(context),
-                    ],
-                  ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildAppBar(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _buildWelcomeSection(),
+                    const SizedBox(height: 30),
+                    _buildMainButtons(context),
+                    const SizedBox(height: 30),
+                    _buildRecommendedStories(context),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
-  
+
   Widget _buildAppBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -76,32 +64,29 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildWelcomeSection() {
     return Column(
       children: [
         const StarAnimation(),
         const SizedBox(height: 20),
-        Text(
+        const Text(
           '晚安，小宝贝',
-          style: GoogleFonts.poppins(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: AppTheme.primaryColor,
+            color: AppColors.primary,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           '让我为你讲一个温暖的睡前故事吧',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
         ),
       ],
     );
   }
-  
+
   Widget _buildMainButtons(BuildContext context) {
     return Row(
       children: [
@@ -111,9 +96,9 @@ class HomePage extends StatelessWidget {
             icon: Icons.auto_awesome,
             title: '生成故事',
             subtitle: 'AI智能定制',
-            color: AppTheme.primaryColor,
+            color: AppColors.primary,
             onTap: () {
-              Navigator.pushNamed(context, '/generate');
+              Navigator.pushNamed(context, '/setup');
             },
           ),
         ),
@@ -124,7 +109,7 @@ class HomePage extends StatelessWidget {
             icon: Icons.book,
             title: '故事库',
             subtitle: '精选好故事',
-            color: AppTheme.secondaryColor,
+            color: AppColors.secondary,
             onTap: () {
               Navigator.pushNamed(context, '/stories');
             },
@@ -133,7 +118,7 @@ class HomePage extends StatelessWidget {
       ],
     );
   }
-  
+
   Widget _buildActionCard(BuildContext context,
       {required IconData icon,
       required String title,
@@ -145,11 +130,11 @@ class HomePage extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -160,27 +145,24 @@ class HomePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 32, color: color),
             ),
             const SizedBox(height: 12),
             Text(title,
-                style: GoogleFonts.poppins(
-                    fontSize: 16, fontWeight: FontWeight.w600)),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
-            Text(subtitle,
-                style: GoogleFonts.poppins(
-                    fontSize: 12, color: Colors.grey[600])),
+            Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildRecommendedStories(BuildContext context) {
-    // 推荐故事数据
     final List<Map<String, dynamic>> stories = [
       {
         'title': '勇敢的小兔子',
@@ -198,49 +180,43 @@ class HomePage extends StatelessWidget {
         'icon': Icons.forest,
       },
     ];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text('📖 推荐故事',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: stories.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final story = stories[index];
-            return _buildStoryCard(
-              context,
-              title: story['title'] as String,
-              description: story['description'] as String,
-              icon: story['icon'] as IconData,
-            );
-          },
-        ),
+        ...stories.map((story) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildStoryCard(
+                context,
+                title: story['title'] as String,
+                description: story['description'] as String,
+                icon: story['icon'] as IconData,
+              ),
+            )),
       ],
     );
   }
-  
+
   Widget _buildStoryCard(BuildContext context,
       {required String title,
       required String description,
       required IconData icon}) {
     return GestureDetector(
       onTap: () {
-        // 点击推荐故事跳转到故事详情（暂时跳转到故事库）
-        Navigator.pushNamed(context, '/stories');
+        // 点击推荐故事跳转到信息填写页，预填该故事主题
+        Navigator.pushNamed(context, '/setup');
       },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.08),
+              color: Colors.grey.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -252,10 +228,10 @@ class HomePage extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppTheme.primaryColor),
+              child: Icon(icon, color: AppColors.primary),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -270,22 +246,20 @@ class HomePage extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.play_circle, color: AppTheme.primaryColor),
+            const Icon(Icons.play_circle, color: AppColors.primary),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildBottomNavigationBar(BuildContext context) {
-    int _currentIndex = 0;
-    
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -295,16 +269,15 @@ class HomePage extends StatelessWidget {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        selectedItemColor: AppTheme.primaryColor,
+        selectedItemColor: AppColors.primary,
         unselectedItemColor: Colors.grey,
-        currentIndex: _currentIndex,
+        currentIndex: 0,
         onTap: (index) {
           switch (index) {
             case 0:
-              // 已经在首页
               break;
             case 1:
-              Navigator.pushNamed(context, '/generate');
+              Navigator.pushNamed(context, '/setup');
               break;
             case 2:
               Navigator.pushNamed(context, '/stories');

@@ -1,31 +1,27 @@
+/// 孩子信息模型
+/// 用于在页面之间传递故事生成的参数
 class ChildInfo {
   final String name;
   final int age;
-  final String gender;
-  final String storyType;
   final List<String> interests;
-  final String language;
-  final DateTime createdAt;
+  final List<String> educationDirections;
+  final String storyStyle;
 
-  ChildInfo({
+  const ChildInfo({
     required this.name,
     required this.age,
-    required this.gender,
-    required this.storyType,
     required this.interests,
-    required this.language,
-    required this.createdAt,
+    required this.educationDirections,
+    required this.storyStyle,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
       'age': age,
-      'gender': gender,
-      'storyType': storyType,
       'interests': interests,
-      'language': language,
-      'createdAt': createdAt.toIso8601String(),
+      'education_directions': educationDirections,
+      'story_style': storyStyle,
     };
   }
 
@@ -33,11 +29,10 @@ class ChildInfo {
     return ChildInfo(
       name: json['name'] as String,
       age: json['age'] as int,
-      gender: json['gender'] as String,
-      storyType: json['storyType'] as String,
       interests: List<String>.from(json['interests'] as List),
-      language: json['language'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      educationDirections:
+          List<String>.from(json['education_directions'] as List),
+      storyStyle: json['story_style'] as String,
     );
   }
 }
