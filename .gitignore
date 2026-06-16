@@ -1,34 +1,69 @@
-﻿# Flutter
-mobile/.dart_tool/
-mobile/.packages
-mobile/build/
-mobile/pubspec.lock
-mobile/.flutter-plugins
-mobile/.flutter-plugins-dependencies
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.env
+venv/
+ENV/
 
-# Android
-mobile/android/local.properties
-mobile/android/.gradle/
-mobile/android/app/build/
-
-# iOS
-mobile/ios/Pods/
-mobile/ios/.symlinks/
-mobile/ios/Flutter/App.framework
-mobile/ios/Flutter/Flutter.framework
-
-# IDE
-.idea/
-.vscode/
+# ===== Flutter/Dart =====
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
 *.iml
+.idea/
 
-# Python
-backend/venv/
-backend/__pycache__/
-backend/*.pyc
-backend/instance/
-backend/.env
+# ===== Android =====
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.keystore
+*.jks
+key.properties
+local.properties
+.gradle/
+captures/
+*.log
 
-# OS
+# ===== iOS =====
+*.ipa
+*.dSYM.zip
+*.dSYM
+Pods/
+Podfile.lock
+
+# ===== IDE =====
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===== OS =====
 .DS_Store
 Thumbs.db
+*.bak
+*.tmp
+
+# ===== Node.js =====
+node_modules/
+
+# ===== Docker =====
+backend/instance/
+
+# ===== Misc =====
+*.log
+*.txt
+!README.md
+!requirements.txt
