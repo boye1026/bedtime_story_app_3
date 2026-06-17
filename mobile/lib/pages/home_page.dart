@@ -134,7 +134,7 @@ class HomePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.1),
+              color: color.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -145,7 +145,7 @@ class HomePage extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 32, color: color),
@@ -216,7 +216,7 @@ class HomePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.08),
+              color: Colors.grey.withOpacity(0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -228,7 +228,7 @@ class HomePage extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: AppColors.primary),
@@ -259,7 +259,7 @@ class HomePage extends StatelessWidget {
         color: AppColors.cardBackground,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
+            color: Colors.grey.withOpacity(0.1),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),

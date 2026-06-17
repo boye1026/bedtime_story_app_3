@@ -171,9 +171,9 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.05),
+                        color: AppColors.primary.withOpacity(0.05),
                         border: Border(
-                          bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.2), width: 0.5),
+                          bottom: BorderSide(color: Colors.grey.withOpacity(0.2), width: 0.5),
                         ),
                       ),
                       child: Row(
@@ -216,7 +216,7 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
                         color: AppColors.cardBackground,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: Colors.black.withOpacity(0.05),
                             blurRadius: 10,
                             offset: const Offset(0, -5),
                           ),

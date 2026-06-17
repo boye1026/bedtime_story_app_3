@@ -26,7 +26,7 @@ class StyleOption extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.1)
+              ? AppColors.primary.withOpacity(0.1)
               : AppColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
@@ -36,7 +36,7 @@ class StyleOption extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.15),
+                    color: AppColors.primary.withOpacity(0.15),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   )
@@ -49,7 +49,7 @@ class StyleOption extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(

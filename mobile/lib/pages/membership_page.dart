@@ -125,7 +125,7 @@ class _MembershipPageState extends State<MembershipPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -156,7 +156,7 @@ class _MembershipPageState extends State<MembershipPage> {
                   _isVip ? '无限生成故事，畅享精品内容' : '升级VIP，解锁更多故事',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white.withOpacity(0.9),
                   ),
                 ),
               ],
@@ -175,7 +175,7 @@ class _MembershipPageState extends State<MembershipPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.08),
+            color: Colors.grey.withOpacity(0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -236,7 +236,7 @@ class _MembershipPageState extends State<MembershipPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.08),
+            color: Colors.grey.withOpacity(0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

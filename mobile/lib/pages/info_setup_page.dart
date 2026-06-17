@@ -175,7 +175,7 @@ class _InfoSetupPageState extends State<InfoSetupPage> {
                       }
                     });
                   },
-                  selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                  selectedColor: AppColors.primary.withOpacity(0.15),
                   backgroundColor: AppColors.cardBackground,
                   labelStyle: TextStyle(
                     color: isSelected ? AppColors.primary : AppColors.textPrimary,
@@ -213,7 +213,7 @@ class _InfoSetupPageState extends State<InfoSetupPage> {
                       }
                     });
                   },
-                  selectedColor: AppColors.secondary.withValues(alpha: 0.15),
+                  selectedColor: AppColors.secondary.withOpacity(0.15),
                   backgroundColor: AppColors.cardBackground,
                   labelStyle: TextStyle(
                     color: isSelected ? AppColors.secondary : AppColors.textPrimary,

@@ -102,7 +102,7 @@ class _StoryListPageState extends State<StoryListPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.book, size: 80, color: AppColors.primary.withValues(alpha: 0.3)),
+                    Icon(Icons.book, size: 80, color: AppColors.primary.withOpacity(0.3)),
                     const SizedBox(height: 16),
                     const Text('还没有收藏的故事', style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 8),
@@ -133,7 +133,7 @@ class _StoryListPageState extends State<StoryListPage> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withValues(alpha: 0.08),
+                        color: Colors.grey.withOpacity(0.08),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -144,7 +144,7 @@ class _StoryListPageState extends State<StoryListPage> {
                       width: 45,
                       height: 45,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: AppColors.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
