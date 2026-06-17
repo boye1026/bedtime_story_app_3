@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class StarAnimation extends StatefulWidget {
   const StarAnimation({super.key});
@@ -48,14 +48,13 @@ class _StarAnimationState extends State<StarAnimation>
               scale: _starAnimations[index].value,
               child: Opacity(
                 opacity: _starAnimations[index].value,
-                child: child,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Icon(Icons.star, color: Colors.amber, size: 24),
+                ),
               ),
             );
           },
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
-            child: Icon(Icons.star, color: Colors.amber, size: 24),
-          ),
         );
       }),
     );
