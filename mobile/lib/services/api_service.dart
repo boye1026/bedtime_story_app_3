@@ -210,7 +210,7 @@ class ApiService {
           'vip_expire_date': null,
         }
       };
-    }
+    };
   }
 
   // ========== 会员相关 API ==========
