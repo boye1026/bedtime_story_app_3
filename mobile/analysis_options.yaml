@@ -4,5 +4,10 @@ linter:
   rules:
     prefer_single_quotes: true
     avoid_print: false
-    prefer_const_constructors: true
-    prefer_const_declarations: true
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    invalid_annotation_target: ignore

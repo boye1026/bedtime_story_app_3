@@ -84,7 +84,7 @@ class _StoryLibraryPageState extends State<StoryLibraryPage> {
     );
   }
 
-  Widget _buildStoryCard(story) {
+  Widget _buildStoryCard(BuiltInStory story) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
