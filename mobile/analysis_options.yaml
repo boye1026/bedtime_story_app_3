@@ -4,6 +4,12 @@ linter:
   rules:
     prefer_single_quotes: true
     avoid_print: false
+    prefer_const_constructors: false
+    prefer_const_literals_to_create_immutables: false
+    prefer_const_declarations: false
+    avoid_unnecessary_containers: false
+    sized_box_for_whitespace: false
+    use_key_in_widget_constructors: false
 
 analyzer:
   exclude:
@@ -11,3 +17,11 @@ analyzer:
     - "**/*.freezed.dart"
   errors:
     invalid_annotation_target: ignore
+    missing_required_param: error
+    missing_return: error
+  warnings:
+    unused_import: ignore
+    unused_element: ignore
+    unused_field: ignore
+    unused_local_variable: ignore
+    dead_code: ignore

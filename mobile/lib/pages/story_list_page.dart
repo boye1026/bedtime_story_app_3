@@ -107,7 +107,7 @@ class _StoryListPageState extends State<StoryListPage> {
                     const Text('还没有收藏的故事', style: TextStyle(fontSize: 16)),
                     const SizedBox(height: 8),
                     Text('去「生成故事」页面创作你的第一个故事吧',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                        style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => Navigator.pushNamed(context, '/setup'),
@@ -154,7 +154,7 @@ class _StoryListPageState extends State<StoryListPage> {
                     ),
                     title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text('${content.length} 字',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../theme/app_theme.dart';
+import '../theme/app_colors.dart';
 import '../services/api_service.dart';
 
 class StoryGeneratePage extends StatefulWidget {
@@ -152,7 +152,7 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
       appBar: AppBar(
         title: const Text('生成故事'),
         centerTitle: true,
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -220,8 +220,8 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
                               }
                             });
                           },
-                          backgroundColor: Colors.grey[200],
-                          selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+                          backgroundColor: Colors.grey.shade200,
+                          selectedColor: AppColors.primary.withOpacity(0.2),
                         );
                       }).toList(),
                     ),
@@ -255,8 +255,8 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
                               });
                             }
                           },
-                          backgroundColor: Colors.grey[200],
-                          selectedColor: AppTheme.primaryColor,
+                          backgroundColor: Colors.grey.shade200,
+                          selectedColor: AppColors.primary,
                         );
                       }).toList(),
                     ),
@@ -295,7 +295,7 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
+                          color: Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -308,7 +308,7 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color: Colors.blue.shade50,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -319,7 +319,7 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
                                 IconButton(
                                   icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
                                   onPressed: _isPlaying ? _pauseStory : _speakStory,
-                                  color: AppTheme.primaryColor,
+                                  color: AppColors.primary,
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.stop),

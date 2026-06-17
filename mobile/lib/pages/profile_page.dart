@@ -81,9 +81,11 @@ class _ProfilePageState extends State<ProfilePage> {
               await prefs.remove('saved_stories');
               setState(() => _storyCount = 0);
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('已清空所有故事')),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('已清空所有故事')),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('确认清空'),
@@ -139,7 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     const SizedBox(height: 8),
                     Text('已收藏 $_storyCount 个故事',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                        style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
                   ],
                 ),
               ),
@@ -257,7 +259,7 @@ class _ProfilePageState extends State<ProfilePage> {
         Icon(icon, color: AppColors.primary, size: 28),
         const SizedBox(height: 8),
         Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
       ],
     );
   }

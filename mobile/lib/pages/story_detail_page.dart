@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/tts_service.dart';
 import '../services/api_service.dart';
 
-/// 故事详情页 - 展示完整故事内容，支持语音朗读
 class StoryDetailPage extends StatefulWidget {
   final String title;
   final String content;
@@ -63,18 +62,20 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
       await _ttsService.stop();
       setState(() => _isSpeaking = false);
     } else {
-      // 检查是否可以收听
       final api = ApiService();
       final status = await api.getVipStatus();
-      final isVip = status['data']['is_vip'] as bool? ?? false;
-      final remaining = status['data']['remaining_free_listen'] as int? ?? 3;
+      final dynamic dataRaw = status['data'];
+      final Map<String, dynamic>? data = dataRaw as Map<String, dynamic>?;
+      final dynamic isVipRaw = data?['is_vip'];
+      final bool isVip = isVipRaw == true;
+      final dynamic remainingRaw = data?['remaining_free_listen'];
+      final int remaining = remainingRaw is int ? remainingRaw : 3;
 
       if (!isVip && remaining <= 0) {
         _showVipModal();
         return;
       }
 
-      // 记录一次
       if (!isVip) {
         await api.recordListen();
       }
@@ -130,7 +131,6 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
       ),
       body: Column(
         children: [
-          // TTS 控制栏
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: BoxDecoration(
@@ -169,7 +169,6 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
               ],
             ),
           ),
-          // 故事内容
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),

@@ -85,7 +85,8 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
         directions: widget.childInfo!.educationDirections,
       );
 
-      final code = response['code'] as int?;
+      final dynamic codeRaw = response['code'];
+      final int code = codeRaw is int ? codeRaw : 200;
       if (code == 403) {
         // 会员限制
         if (mounted) {
@@ -93,14 +94,22 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
         }
         return;
       }
-      final data = response['data'] as Map<String, dynamic>?;
+      final dynamic dataRaw = response['data'];
+      final Map<String, dynamic>? data = dataRaw as Map<String, dynamic>?;
       if (data != null) {
-        setState(() {
-          _storyTitle = data['title'] ?? '给${widget.childInfo?.name ?? '宝贝'}的睡前故事';
-          _storyContent = data['content'] ?? '';
-        });
+        if (mounted) {
+          setState(() {
+            final dynamic titleRaw = data['title'];
+            final String title = titleRaw is String ? titleRaw : '故事';
+            final dynamic contentRaw = data['content'];
+            final String content = contentRaw is String ? contentRaw : '';
+            _storyTitle = title;
+            _storyContent = content;
+          });
+        }
       } else {
-        final msg = response['message'] as String? ?? '故事内容为空';
+        final dynamic msgRaw = response['message'];
+        final String msg = msgRaw is String ? msgRaw : '故事内容为空';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         }

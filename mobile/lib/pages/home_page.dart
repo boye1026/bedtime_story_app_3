@@ -90,7 +90,7 @@ class HomePage extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           '让我为你讲一个温暖的睡前故事吧',
-          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
         ),
       ],
     );
@@ -164,7 +164,7 @@ class HomePage extends StatelessWidget {
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
-            Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
           ],
         ),
       ),
@@ -215,7 +215,6 @@ class HomePage extends StatelessWidget {
       required IconData icon}) {
     return GestureDetector(
       onTap: () {
-        // 点击推荐故事跳转到信息填写页，预填该故事主题
         Navigator.pushNamed(context, '/setup');
       },
       child: Container(
@@ -251,7 +250,7 @@ class HomePage extends StatelessWidget {
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.w600)),
                   Text(description,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                 ],
               ),
             ),

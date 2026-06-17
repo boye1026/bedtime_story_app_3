@@ -10,7 +10,6 @@ class TTSService {
 
   final FlutterTts _flutterTts = FlutterTts();
   bool _isInitialized = false;
-  String _currentText = '';
   bool _isSpeaking = false;
 
   VoidCallback? onStart;
@@ -80,7 +79,6 @@ class TTSService {
     try {
       await init();
       await stop();
-      _currentText = text;
       _isSpeaking = true;
 
       // 直接朗读整个文本（使用回调处理完成状态）
@@ -144,29 +142,5 @@ class TTSService {
   /// 清理资源
   void dispose() {
     try { stop(); } catch (_) {}
-  }
-
-  /// 将长文本拆分成合适的段落
-  List<String> _splitText(String text) {
-    final List<String> segments = [];
-    final buffer = StringBuffer();
-    int count = 0;
-
-    for (final ch in text.characters) {
-      buffer.write(ch);
-      count++;
-      // 在句末标点处分段，每段约150字
-      if (count >= 150 && ('。！？！？'.contains(ch) || '，；：'.contains(ch))) {
-        segments.add(buffer.toString());
-        buffer.clear();
-        count = 0;
-      }
-    }
-
-    if (buffer.isNotEmpty) {
-      segments.add(buffer.toString());
-    }
-
-    return segments.where((s) => s.trim().isNotEmpty).toList();
   }
 }

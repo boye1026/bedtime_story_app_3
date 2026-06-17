@@ -21,9 +21,9 @@ class AppTheme {
           backgroundColor: Colors.transparent,
           foregroundColor: primaryColor,
         ),
-        cardTheme: CardTheme(
+        cardTheme: const CardThemeData(
           elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
         ),
       );
 
@@ -42,9 +42,9 @@ class AppTheme {
           backgroundColor: Colors.transparent,
           foregroundColor: primaryColor,
         ),
-        cardTheme: CardTheme(
+        cardTheme: const CardThemeData(
           elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
         ),
       );
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
-/// 会员中心页面
 class MembershipPage extends StatefulWidget {
   const MembershipPage({super.key});
 
@@ -27,12 +26,19 @@ class _MembershipPageState extends State<MembershipPage> {
 
   Future<void> _loadStatus() async {
     final status = await _api.getVipStatus();
-    final data = status['data'] as Map<String, dynamic>;
+    final dynamic dataRaw = status['data'];
+    final Map<String, dynamic>? data = dataRaw as Map<String, dynamic>?;
+    final dynamic isVipRaw = data?['is_vip'];
+    final dynamic remGenRaw = data?['remaining_free_generate'];
+    final dynamic remListenRaw = data?['remaining_free_listen'];
+    final dynamic expireRaw = data?['vip_expire_date'];
     setState(() {
-      _isVip = data['is_vip'] as bool? ?? false;
-      _remainingGenerate = data['remaining_free_generate'] as int? ?? 3;
-      _remainingListen = data['remaining_free_listen'] as int? ?? 3;
-      _expireDate = data['vip_expire_date'] as String?;
+      _isVip = isVipRaw == true;
+      _remainingGenerate = remGenRaw is int ? remGenRaw : 3;
+      if (_remainingGenerate < 0) _remainingGenerate = 0;
+      _remainingListen = remListenRaw is int ? remListenRaw : 3;
+      if (_remainingListen < 0) _remainingListen = 0;
+      _expireDate = expireRaw is String ? expireRaw : null;
       _isLoading = false;
     });
   }
@@ -55,21 +61,17 @@ class _MembershipPageState extends State<MembershipPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // VIP 状态卡片
                   _buildStatusCard(),
                   const SizedBox(height: 20),
 
-                  // 免费次数
                   if (!_isVip) ...[
                     _buildFreeCountCard(),
                     const SizedBox(height: 20),
                   ],
 
-                  // VIP权益
                   _buildBenefitsCard(),
                   const SizedBox(height: 20),
 
-                  // 套餐列表
                   if (!_isVip) ...[
                     ...plans.map((plan) {
                       final isSelected = _selectedPlan == plan['plan_type'];
@@ -216,7 +218,17 @@ class _MembershipPageState extends State<MembershipPage> {
   Widget _buildPlanCard(Map<String, dynamic> plan, bool isSelected) {
     final name = plan['name']?.toString() ?? '会员';
     final desc = plan['description']?.toString() ?? '';
-    final price = double.tryParse(plan['price'].toString()) ?? 0.0;
+    final priceValue = plan['price'];
+    double price = 0.0;
+    if (priceValue is double) {
+      price = priceValue;
+    } else if (priceValue is int) {
+      price = priceValue.toDouble();
+    } else if (priceValue is num) {
+      price = priceValue.toDouble();
+    } else {
+      price = double.tryParse(priceValue.toString()) ?? 0.0;
+    }
     final planType = plan['plan_type']?.toString() ?? '';
 
     return GestureDetector(
@@ -245,7 +257,7 @@ class _MembershipPageState extends State<MembershipPage> {
                 children: [
                   Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                   const SizedBox(height: 8),
                   Text('¥${price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
                 ],
@@ -319,7 +331,7 @@ class _BenefitItem extends StatelessWidget {
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                 const SizedBox(height: 2),
-                Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
               ],
             ),
           ),

@@ -35,4 +35,20 @@ class ChildInfo {
       storyStyle: json['story_style'] as String,
     );
   }
+
+  /// 将中文风格名映射为英文键名（API 使用）
+  String get styleKey {
+    switch (storyStyle) {
+      case '童话风':
+        return 'fairy_tale';
+      case '冒险风':
+        return 'adventure';
+      case '温馨风':
+        return 'warm';
+      case '启蒙风':
+        return 'educational';
+      default:
+        return 'fairy_tale';
+    }
+  }
 }

@@ -27,8 +27,6 @@ class BedtimeStoryApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.background,
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
-          primary: AppColors.primary,
-          secondary: AppColors.secondary,
         ),
         useMaterial3: true,
         fontFamily: 'Default',
@@ -38,11 +36,11 @@ class BedtimeStoryApp extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
         ),
-        cardTheme: CardTheme(
+        cardTheme: const CardThemeData(
           color: AppColors.cardBackground,
           elevation: 2,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -67,14 +65,16 @@ class BedtimeStoryApp extends StatelessWidget {
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/story-display') {
-          final args = settings.arguments;
+          final dynamic args = settings.arguments;
           if (args is ChildInfo) {
             return MaterialPageRoute(
               builder: (context) => StoryDisplayPage(childInfo: args),
             );
           } else if (args is Map) {
-            final title = args['title'] as String? ?? '故事';
-            final content = args['content'] as String? ?? '';
+            final dynamic titleRaw = args['title'];
+            final String title = titleRaw is String ? titleRaw : '故事';
+            final dynamic contentRaw = args['content'];
+            final String content = contentRaw is String ? contentRaw : '';
             return MaterialPageRoute(
               builder: (context) => StoryDisplayPage(
                 storyTitle: title,
@@ -84,13 +84,18 @@ class BedtimeStoryApp extends StatelessWidget {
           }
         }
         if (settings.name == '/story-detail') {
-          final args = settings.arguments as Map<String, dynamic>?;
+          final dynamic argsRaw = settings.arguments;
+          final Map<String, dynamic>? args = argsRaw is Map<String, dynamic> ? argsRaw : null;
+          final dynamic titleRaw = args?['title'];
+          final dynamic contentRaw = args?['content'];
+          final dynamic categoryRaw = args?['category'];
+          final dynamic categoryIconRaw = args?['categoryIcon'];
           return MaterialPageRoute(
             builder: (context) => StoryDetailPage(
-              title: args?['title'] as String? ?? '故事',
-              content: args?['content'] as String? ?? '',
-              category: args?['category'] as String? ?? '',
-              categoryIcon: args?['categoryIcon'] as String? ?? '📖',
+              title: titleRaw is String ? titleRaw : '故事',
+              content: contentRaw is String ? contentRaw : '',
+              category: categoryRaw is String ? categoryRaw : '',
+              categoryIcon: categoryIconRaw is String ? categoryIconRaw : '📖',
             ),
           );
         }
