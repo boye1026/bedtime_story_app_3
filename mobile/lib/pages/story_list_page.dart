@@ -13,7 +13,7 @@ class StoryListPage extends StatefulWidget {
 class _StoryListPageState extends State<StoryListPage> {
   List<Map<String, String>> _savedStories = [];
   final TTSService _ttsService = TTSService();
-  int? _playingIndex;
+  int _playingIndex = -1;
 
   @override
   void initState() {

@@ -25,7 +25,6 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
   final TTSService _ttsService = TTSService();
   bool _isSpeaking = false;
   bool _isLoading = false;
-  bool _showVipDialog = false;
 
   @override
   void initState() {

@@ -81,21 +81,15 @@ class TTSService {
       await init();
       await stop();
       _currentText = text;
+      _isSpeaking = true;
 
-      // 将文本分段朗读（每段不超过200字，避免某些平台截断）
-      final segments = _splitText(text);
-      for (final segment in segments) {
-        if (segment.trim().isEmpty) continue;
-        await _flutterTts.awaitSpeakCompletion(true);
-        final result = await _flutterTts.speak(segment);
-        if (result != 1) {
-          debugPrint('TTS朗读失败: segment="$segment"');
-          break;
-        }
-      }
-      _isSpeaking = false;
-      if (onComplete != null) {
-        try { onComplete!(); } catch (_) {}
+      // 直接朗读整个文本（使用回调处理完成状态）
+      final dynamic result = await _flutterTts.speak(text);
+      // result 可能是 1 (int) 或 true (bool)，两者都代表成功
+      final success = result == 1 || result == true;
+      if (!success) {
+        debugPrint('TTS朗读失败');
+        _isSpeaking = false;
       }
     } catch (e) {
       debugPrint('TTS朗读异常: $e');
