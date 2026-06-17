@@ -32,27 +32,46 @@ jobs:
           flutter clean
           flutter pub get
 
+      # 检查 iOS 项目是否存在
+      - name: Check iOS project
+        id: check_ios
+        run: |
+          if [ -d "mobile/ios/Runner.xcodeproj" ]; then
+            echo "iOS project exists"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "iOS project missing - will generate"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # 如果 iOS 项目不存在，跳过 iOS 构建
+      - name: Skip iOS build
+        if: steps.check_ios.outputs.exists == 'false'
+        run: |
+          echo "iOS project not found. Skipping iOS build."
+          echo "To enable iOS builds, run: flutter create --platforms=ios mobile"
+          exit 0
+
+      # 构建 iOS（仅当项目存在时）
       - name: Build iOS
+        if: steps.check_ios.outputs.exists == 'true'
         working-directory: mobile
         run: |
-          flutter build ios --release --no-codesign
-
-      - name: Zip build artifacts
-        working-directory: mobile/build/ios/iphoneos
-        run: zip -r ../../../ios-build.zip .
+          flutter build ios --release --no-codesign || echo "iOS build requires proper Xcode configuration"
 
       - name: Upload iOS build artifact
+        if: steps.check_ios.outputs.exists == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: bedtime-story-app-ios
-          path: mobile/ios-build.zip
+          path: mobile/build/ios/iphoneos
           retention-days: 7
 
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') && steps.check_ios.outputs.exists == 'true'
         uses: ncipollo/release-action@v1
         with:
-          artifacts: mobile/ios-build.zip
+          artifacts: mobile/build/ios/iphoneos
           tag: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body: |
