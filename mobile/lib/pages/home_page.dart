@@ -47,16 +47,25 @@ class HomePage extends StatelessWidget {
           Row(
             children: [
               IconButton(
+                icon: const Icon(Icons.workspace_premium, color: Color(0xFF6C63FF)),
+                onPressed: () {
+                  Navigator.pushNamed(context, '/membership');
+                },
+                tooltip: '会员中心',
+              ),
+              IconButton(
                 icon: const Icon(Icons.history),
                 onPressed: () {
                   Navigator.pushNamed(context, '/stories');
                 },
+                tooltip: '故事记录',
               ),
               IconButton(
                 icon: const Icon(Icons.person),
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile');
                 },
+                tooltip: '个人中心',
               ),
             ],
           ),
@@ -106,12 +115,12 @@ class HomePage extends StatelessWidget {
         Expanded(
           child: _buildActionCard(
             context,
-            icon: Icons.book,
+            icon: Icons.library_books,
             title: '故事库',
             subtitle: '精选好故事',
             color: AppColors.secondary,
             onTap: () {
-              Navigator.pushNamed(context, '/stories');
+              Navigator.pushNamed(context, '/story-library');
             },
           ),
         ),

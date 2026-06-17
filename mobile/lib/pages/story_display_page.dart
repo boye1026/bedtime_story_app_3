@@ -85,12 +85,25 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
         directions: widget.childInfo!.educationDirections,
       );
 
+      final code = response['code'] as int?;
+      if (code == 403) {
+        // 会员限制
+        if (mounted) {
+          _showVipDialog();
+        }
+        return;
+      }
       final data = response['data'] as Map<String, dynamic>?;
       if (data != null) {
         setState(() {
           _storyTitle = data['title'] ?? '给${widget.childInfo?.name ?? '宝贝'}的睡前故事';
           _storyContent = data['content'] ?? '';
         });
+      } else {
+        final msg = response['message'] as String? ?? '故事内容为空';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -134,6 +147,40 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
     } catch (e) {
       debugPrint('保存故事失败: $e');
     }
+  }
+
+  void _showVipDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('✨ 开通会员', style: TextStyle(fontSize: 20)),
+        content: const Text(
+          '免费生成故事的次数已用完，开通会员即可无限生成专属睡前故事，还有数百个精选故事任你收听！',
+          style: TextStyle(fontSize: 15, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('稍后再说', style: TextStyle(fontSize: 15)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pushNamed(context, '/membership');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFFA500),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('立即开通', style: TextStyle(fontSize: 15)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

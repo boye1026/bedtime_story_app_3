@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../theme/app_colors.dart';
 
+/// 会员中心页面
 class MembershipPage extends StatefulWidget {
   const MembershipPage({super.key});
 
@@ -11,114 +11,104 @@ class MembershipPage extends StatefulWidget {
 
 class _MembershipPageState extends State<MembershipPage> {
   bool _isVip = false;
-  int _remainingFreeCount = 0;
-  List<Map<String, dynamic>> _plans = [];
+  int _remainingGenerate = 3;
+  int _remainingListen = 3;
+  String? _expireDate;
   bool _isLoading = true;
+  String? _selectedPlan;
+
+  final ApiService _api = ApiService();
 
   @override
   void initState() {
     super.initState();
-    _loadMembershipInfo();
+    _loadStatus();
   }
 
-  Future<void> _loadMembershipInfo() async {
-    try {
-      final api = ApiService();
-      // 并行加载会员状态和套餐
-      final plans = await api.getVIPPlans();
-      final userInfo = await api.getUserInfo();
-
-      setState(() {
-        _plans = List<Map<String, dynamic>>.from(plans);
-        final userData = userInfo['data'] as Map<String, dynamic>?;
-        if (userData != null) {
-          _isVip = userData['is_vip'] as bool? ?? false;
-          _remainingFreeCount = userData['remaining_free_count'] as int? ?? 0;
-        }
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('加载会员信息失败: $e');
-      setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _handlePurchase(String planType, double price) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('确认购买'),
-        content: Text('购买 $planType 会员，价格 ¥$price'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('确认支付'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      setState(() => _isLoading = true);
-      try {
-        final api = ApiService();
-        final result = await api.activateVIP(planType);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('购买成功！感谢您成为VIP会员')),
-          );
-          await _loadMembershipInfo();
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('购买失败: $e')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-      }
-    }
+  Future<void> _loadStatus() async {
+    final status = await _api.getVipStatus();
+    final data = status['data'] as Map<String, dynamic>;
+    setState(() {
+      _isVip = data['is_vip'] as bool? ?? false;
+      _remainingGenerate = data['remaining_free_generate'] as int? ?? 3;
+      _remainingListen = data['remaining_free_listen'] as int? ?? 3;
+      _expireDate = data['vip_expire_date'] as String?;
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final plans = _api.getVipPlans();
+
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('VIP会员')),
+      backgroundColor: const Color(0xFFFFF8F0),
+      appBar: AppBar(
+        title: const Text('👑 会员中心'),
+        backgroundColor: const Color(0xFF6C63FF),
+        foregroundColor: Colors.white,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildVIPStatusCard(),
+                  // VIP 状态卡片
+                  _buildStatusCard(),
                   const SizedBox(height: 20),
-                  _buildFreeCountCard(),
-                  const SizedBox(height: 20),
+
+                  // 免费次数
+                  if (!_isVip) ...[
+                    _buildFreeCountCard(),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // VIP权益
                   _buildBenefitsCard(),
                   const SizedBox(height: 20),
-                  ..._plans.map((plan) => _buildPlanCard(plan)),
+
+                  // 套餐列表
+                  if (!_isVip) ...[
+                    ...plans.map((plan) {
+                      final isSelected = _selectedPlan == plan['plan_type'];
+                      return _buildPlanCard(plan, isSelected);
+                    }),
+                    const SizedBox(height: 16),
+                    if (_selectedPlan != null)
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFFA500),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+                            elevation: 4,
+                          ),
+                          onPressed: () async {
+                            await _api.activateVip(_selectedPlan!);
+                            _showSuccess();
+                            _loadStatus();
+                          },
+                          child: const Text('✨ 立即开通', style: TextStyle(fontSize: 18)),
+                        ),
+                      ),
+                  ],
                 ],
               ),
             ),
     );
   }
 
-  Widget _buildVIPStatusCard() {
+  Widget _buildStatusCard() {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: _isVip
               ? [const Color(0xFFFFD700), const Color(0xFFFFA500)]
-              : [AppColors.primary, AppColors.secondary],
+              : [const Color(0xFF6C63FF), const Color(0xFFFF6B9D)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -131,36 +121,32 @@ class _MembershipPageState extends State<MembershipPage> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            _isVip ? Icons.workspace_premium : Icons.star_outline,
-            size: 56,
-            color: Colors.white,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _isVip ? 'VIP会员' : '免费用户',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+          Row(
+            children: [
+              Icon(_isVip ? Icons.workspace_premium : Icons.star_outline, size: 40, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _isVip ? 'VIP会员' : '免费用户',
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _isVip
+                          ? '到期时间：${_formatDate(_expireDate)}'
+                          : '升级VIP，畅享全部精彩故事',
+                      style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.9)),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  _isVip ? '无限生成故事，畅享精品内容' : '升级VIP，解锁更多故事',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -171,33 +157,35 @@ class _MembershipPageState extends State<MembershipPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 2)),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          const Icon(Icons.today, size: 40, color: AppColors.primary),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('今日免费生成次数',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('$_remainingFreeCount / 5 次',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-              ],
-            ),
-          ),
+          _buildCountItem(Icons.auto_awesome, '免费AI生成', _remainingGenerate),
+          const Divider(height: 24),
+          _buildCountItem(Icons.book, '免费收听故事', _remainingListen),
         ],
       ),
+    );
+  }
+
+  Widget _buildCountItem(IconData icon, String label, int remaining) {
+    return Row(
+      children: [
+        Icon(icon, size: 30, color: const Color(0xFF6C63FF)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(label, style: const TextStyle(fontSize: 15)),
+        ),
+        Text(
+          '剩余 $remaining 次',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D)),
+        ),
+      ],
     );
   }
 
@@ -205,65 +193,107 @@ class _MembershipPageState extends State<MembershipPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.grey.withOpacity(0.08), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('🎁 VIP专属权益', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SizedBox(height: 12),
-          _BenefitItem(icon: '✨', title: '无限生成故事', desc: 'VIP用户无限制生成故事'),
-          _BenefitItem(icon: '📚', title: '精品故事库', desc: '解锁精选睡前故事合集'),
-          _BenefitItem(icon: '🎵', title: '高品质语音', desc: '真人音色，情感朗读'),
-          _BenefitItem(icon: '🔇', title: '无广告体验', desc: '纯净听故事，不分心'),
+          Text('🎁 VIP 专属权益', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          SizedBox(height: 16),
+          _BenefitItem(icon: '✨', title: '无限AI生成故事', desc: '随时生成专属于你的睡前故事'),
+          _BenefitItem(icon: '📚', title: '畅享精品故事库', desc: '数百个精选睡前故事随心听'),
+          _BenefitItem(icon: '🎵', title: '高品质语音朗读', desc: '清晰温柔的语音为你讲故事'),
+          _BenefitItem(icon: '🔇', title: '无广告纯净体验', desc: '纯净听故事，不分心'),
         ],
       ),
     );
   }
 
-  Widget _buildPlanCard(Map<String, dynamic> plan) {
-    final name = plan['name']?.toString() ?? '会员套餐';
+  Widget _buildPlanCard(Map<String, dynamic> plan, bool isSelected) {
+    final name = plan['name']?.toString() ?? '会员';
     final desc = plan['description']?.toString() ?? '';
     final price = double.tryParse(plan['price'].toString()) ?? 0.0;
     final planType = plan['plan_type']?.toString() ?? '';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedPlan = planType);
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFFFF8E0) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFFFA500) : Colors.grey.withOpacity(0.2),
+            width: isSelected ? 2 : 1,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(desc, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-                const SizedBox(height: 8),
-                Text('¥${price.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.primary)),
-              ],
+          boxShadow: isSelected
+              ? [BoxShadow(color: const Color(0xFFFFA500).withOpacity(0.2), blurRadius: 12, offset: const Offset(0, 2))]
+              : [BoxShadow(color: Colors.grey.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 2))],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  const SizedBox(height: 8),
+                  Text('¥${price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
+                ],
+              ),
             ),
-          ),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? const Color(0xFFFFA500) : Colors.white,
+                border: Border.all(color: const Color(0xFFFFA500)),
+              ),
+              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSuccess() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('🎉 开通成功'),
+        content: const Text('恭喜您！现在可以畅享所有故事啦～'),
+        actions: [
           ElevatedButton(
-            onPressed: () => _handlePurchase(planType, price),
-            child: const Text('购买'),
+            onPressed: () {
+              Navigator.pop(ctx);
+            },
+            child: const Text('太棒了'),
           ),
         ],
       ),
     );
+  }
+
+  String _formatDate(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(isoString);
+      return '${dt.year}年${dt.month}月${dt.day}日';
+    } catch (_) {
+      return '';
+    }
   }
 }
 
@@ -277,16 +307,18 @@ class _BenefitItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 20)),
+          Text(icon, style: const TextStyle(fontSize: 22)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                const SizedBox(height: 2),
                 Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
               ],
             ),

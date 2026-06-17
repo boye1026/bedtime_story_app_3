@@ -3,6 +3,8 @@ import 'theme/app_colors.dart';
 import 'pages/home_page.dart';
 import 'pages/info_setup_page.dart';
 import 'pages/story_display_page.dart';
+import 'pages/story_detail_page.dart';
+import 'pages/story_library_page.dart';
 import 'pages/story_list_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/membership_page.dart';
@@ -59,11 +61,11 @@ class BedtimeStoryApp extends StatelessWidget {
         '/': (context) => const HomePage(),
         '/setup': (context) => const InfoSetupPage(),
         '/stories': (context) => const StoryListPage(),
+        '/story-library': (context) => const StoryLibraryPage(),
         '/profile': (context) => const ProfilePage(),
         '/membership': (context) => const MembershipPage(),
       },
       onGenerateRoute: (settings) {
-        // 处理 story-display 路由，传递 ChildInfo 参数
         if (settings.name == '/story-display') {
           final args = settings.arguments;
           if (args is ChildInfo) {
@@ -71,7 +73,6 @@ class BedtimeStoryApp extends StatelessWidget {
               builder: (context) => StoryDisplayPage(childInfo: args),
             );
           } else if (args is Map) {
-            // 也支持传递 Map 形式的参数
             final title = args['title'] as String? ?? '故事';
             final content = args['content'] as String? ?? '';
             return MaterialPageRoute(
@@ -81,6 +82,17 @@ class BedtimeStoryApp extends StatelessWidget {
               ),
             );
           }
+        }
+        if (settings.name == '/story-detail') {
+          final args = settings.arguments as Map<String, dynamic>?;
+          return MaterialPageRoute(
+            builder: (context) => StoryDetailPage(
+              title: args?['title'] as String? ?? '故事',
+              content: args?['content'] as String? ?? '',
+              category: args?['category'] as String? ?? '',
+              categoryIcon: args?['categoryIcon'] as String? ?? '📖',
+            ),
+          );
         }
         return null;
       },
