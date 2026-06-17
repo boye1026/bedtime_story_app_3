@@ -4,8 +4,20 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+def hasReleaseKeystore = false
+
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    def storeFile = file(keystoreProperties['storeFile'])
+    if (storeFile.exists()) {
+        hasReleaseKeystore = true
+    }
+}
+
 android {
-    namespace "com.example.bedtime_story_app"
+    namespace "com.bedtime.story.app"
     compileSdkVersion 34
     ndkVersion flutter.ndkVersion
 
@@ -19,15 +31,31 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.bedtime_story_app"
-        minSdkVersion flutter.minSdkVersion
+        applicationId "com.bedtime.story.app"
+        minSdkVersion 21
         targetSdkVersion 34
         versionCode 1
         versionName "1.0.0"
     }
 
+    if (hasReleaseKeystore) {
+        signingConfigs {
+            release {
+                keyAlias = keystoreProperties['keyAlias']
+                keyPassword = keystoreProperties['keyPassword']
+                storeFile = file(keystoreProperties['storeFile'])
+                storePassword = keystoreProperties['storePassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (hasReleaseKeystore) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -37,4 +65,8 @@ android {
 
 flutter {
     source '../..'
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"
 }
