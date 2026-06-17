@@ -5,8 +5,13 @@ on:
     branches: [ main ]
     tags:
       - 'v*'
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/build-apk.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'mobile/**'
   workflow_dispatch:
 
 jobs:
@@ -37,10 +42,6 @@ jobs:
           flutter clean
           flutter pub get
 
-      - name: Lint check
-        working-directory: mobile
-        run: flutter analyze || true
-
       - name: Build APK
         working-directory: mobile
         run: flutter build apk --release
@@ -59,8 +60,3 @@ jobs:
           artifacts: mobile/build/app/outputs/flutter-apk/app-release.apk
           tag: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
-          body: |
-            ## 版本更新
-
-            - 自动构建 APK
-            - 基于标签 ${{ github.ref_name }}
