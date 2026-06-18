@@ -12,7 +12,7 @@ class MembershipPage extends StatefulWidget {
 }
 
 class _MembershipPageState extends State<MembershipPage> {
-  String _selectedPlan = 'monthly';
+  String _selectedPlan = 'weekly';
   String _selectedPayment = 'wechat';
   bool _isLoading = false;
   bool _isLoggedIn = false;
@@ -270,9 +270,11 @@ class _MembershipPageState extends State<MembershipPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _buildPlanOption('monthly', '月度会员', '29', '30天'),
+                  _buildPlanOption('weekly', '周卡会员', '9', '7天'),
                   const SizedBox(height: 12),
-                  _buildPlanOption('yearly', '年度会员', '299', '365天'),
+                  _buildPlanOption('monthly', '月卡会员', '19', '30天'),
+                  const SizedBox(height: 12),
+                  _buildPlanOption('yearly', '年度会员', '199', '365天'),
                 ],
               ),
             ),

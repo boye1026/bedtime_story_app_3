@@ -41,5 +41,9 @@
         <intent>
             <action android:name="android.speech.RecognitionService"/>
         </intent>
+        <!-- 支付宝支付 -->
+        <package android:name="com.eg.android.AlipayGphone"/>
+        <!-- 微信支付 -->
+        <package android:name="com.tencent.mm"/>
     </queries>
 </manifest>

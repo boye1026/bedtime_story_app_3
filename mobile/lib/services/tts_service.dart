@@ -1,6 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
+/// TTS服务
+/// 当前使用 flutter_tts 调用系统TTS引擎
+/// 注意：flutter_tts 调用的是系统级TTS，无法直接使用"芒果姐姐"等真实人声音频
+/// 真实"芒果姐姐"声音需集成云端TTS API：
+///   - 百度智能云TTS（支持明星声音如"度小萌"、"度博文"等）
+///   - 讯飞开放平台TTS（支持"小燕"、"小婧"等女声）
+///   - 阿里云语音合成TTS
+///   - 腾讯云智聆语音TTS
+/// 推荐使用：讯飞开放平台 https://www.xfyun.cn/services/online_tts ，
+///   其"小婧"女声与芒果姐姐风格相近（温柔、亲切、适合儿童故事）
 class TTSService {
   static final TTSService _instance = TTSService._internal();
   factory TTSService() => _instance;
@@ -25,25 +35,36 @@ class TTSService {
         IosTextToSpeechAudioCategoryOptions.mixWithOthers,
       ], IosTextToSpeechAudioMode.voicePrompt);
 
-      // 芒果姐姐风格 - 温柔、亲切的女性讲故事声音
+      // 芒果姐姐风格 - 温柔、亲切、像姐姐讲故事的声音
+      // 语速 0.38：较慢，像讲故事时温柔地讲述
+      // 音调 1.30：较高，模拟年轻女性温柔声音
+      // 音量 1.0：清晰
       await _flutterTts.setLanguage('zh-CN');
-      await _flutterTts.setSpeechRate(0.42); // 较慢的语速，像姐姐讲故事
-      await _flutterTts.setPitch(1.25); // 较高的音调，模拟年轻女性声音
-      await _flutterTts.setVolume(0.95);
+      await _flutterTts.setSpeechRate(0.38);
+      await _flutterTts.setPitch(1.30);
+      await _flutterTts.setVolume(1.0);
 
-      // 尝试选择中文女性声音
+      // 尝试选择中文女性声音（小米/小爱/晓晓/婷婷/小燕等）
       try {
         final voices = await _flutterTts.getVoices;
         debugPrint('Available voices: $voices');
         if (voices != null && voices is List) {
-          for (final voice in voices) {
-            final voiceStr = voice.toString().toLowerCase();
-            if (voiceStr.contains('zh') && 
-                (voiceStr.contains('female') || voiceStr.contains('xiaoxiao') || 
-                 voiceStr.contains('jingjing') || voiceStr.contains('lili'))) {
-              await _flutterTts.setVoice(voice);
-              debugPrint('Selected voice: $voice');
-              break;
+          // 优先尝试这些温柔女性声音名称
+          final preferredNames = [
+            'xiaoxiao', 'xiaoyi', 'xiaoyou', 'xiaomeng', 'xiaomo',
+            'tingting', 'jingjing', 'lili', 'yating', 'hsiaoyu',
+            'meijia', 'sophie', 'hui', 'mei', 'sara', 'catherine',
+            'female', 'girl', 'woman', 'xiaomi', 'xiaoi', 'xiaoai',
+            'mango', 'mangguo', 'jiemei', 'sister'
+          ];
+          for (final name in preferredNames) {
+            for (final voice in voices) {
+              final voiceStr = voice.toString().toLowerCase();
+              if (voiceStr.contains(name) && (voiceStr.contains('zh') || voiceStr.contains('cn'))) {
+                await _flutterTts.setVoice(voice);
+                debugPrint('Selected voice: $voice');
+                break;
+              }
             }
           }
         }
@@ -56,15 +77,15 @@ class TTSService {
         final engines = await _flutterTts.getEngines;
         debugPrint('Available TTS engines: $engines');
         if (engines != null && engines is List) {
-          for (final engine in engines) {
-            final engineStr = engine.toString().toLowerCase();
-            if (engineStr.contains('google') || 
-                engineStr.contains('xiaomi') ||
-                engineStr.contains('iflytek') ||
-                engineStr.contains('baidu')) {
-              await _flutterTts.setEngine(engine.toString());
-              debugPrint('Selected engine: $engine');
-              break;
+          // 优先使用国内TTS引擎
+          final preferredEngines = ['iflytek', 'baidu', 'xiaomi', 'tencent', 'alibaba'];
+          for (final prefEngine in preferredEngines) {
+            for (final engine in engines) {
+              if (engine.toString().toLowerCase().contains(prefEngine)) {
+                await _flutterTts.setEngine(engine.toString());
+                debugPrint('Selected engine: $engine');
+                break;
+              }
             }
           }
         }
@@ -113,7 +134,7 @@ class TTSService {
       debugPrint('Available languages: $languages');
 
       _isInitialized = true;
-      debugPrint('TTS 初始化完成 - 女性温柔声音模式');
+      debugPrint('TTS 初始化完成 - 芒果姐姐风格（温柔女性声音）');
     } catch (e) {
       debugPrint('TTS 初始化异常: $e');
     }

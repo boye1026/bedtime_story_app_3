@@ -67,15 +67,22 @@ class _StoryLibraryPageState extends State<StoryLibraryPage> {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
-        label: Text('$icon $label'),
+        label: Text(
+          '$icon $label',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         selected: isSelected,
         onSelected: (_) {
           setState(() => _selectedCategory = category);
         },
-        backgroundColor: Colors.white.withOpacity(0.3),
-        selectedColor: Colors.white,
+        backgroundColor: const Color(0xFFFF8C42), // 未选中：橙色
+        selectedColor: const Color(0xFF1E90FF), // 选中：蓝色
         labelStyle: TextStyle(
-          color: isSelected ? const Color(0xFF6C63FF) : Colors.white,
+          color: Colors.white,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -84,7 +91,7 @@ class _StoryLibraryPageState extends State<StoryLibraryPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
-            color: isSelected ? const Color(0xFF6C63FF) : Colors.white.withOpacity(0.5),
+            color: isSelected ? const Color(0xFF1E90FF) : const Color(0xFFFF6B1A),
             width: 1.5,
           ),
         ),
