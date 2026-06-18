@@ -206,8 +206,8 @@ class _MembershipPageState extends State<MembershipPage> {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
+                children: [
+                  const Text(
                     '会员特权',
                     style: TextStyle(
                       fontSize: 18,
@@ -215,20 +215,35 @@ class _MembershipPageState extends State<MembershipPage> {
                       color: Color(0xFF2D3436),
                     ),
                   ),
-                  SizedBox(height: 16),
-                  for (var privilege in const [
-                    '♾️  无限次故事生成',
-                    '✨  智能推荐主题',
-                    '🎭  丰富故事风格',
-                    '💎  专属会员标识',
-                  ])
-                    Padding(
-                      padding: EdgeInsets.symmetric(vertical: 6),
-                      child: Text(
-                        privilege,
-                        style: TextStyle(fontSize: 16, color: Color(0xFF636E72)),
-                      ),
+                  const SizedBox(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      '♾️  无限次故事生成',
+                      style: TextStyle(fontSize: 16, color: Color(0xFF636E72)),
                     ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      '✨  智能推荐主题',
+                      style: TextStyle(fontSize: 16, color: Color(0xFF636E72)),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      '🎭  丰富故事风格',
+                      style: TextStyle(fontSize: 16, color: Color(0xFF636E72)),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      '💎  专属会员标识',
+                      style: TextStyle(fontSize: 16, color: Color(0xFF636E72)),
+                    ),
+                  ),
                 ],
               ),
             ),

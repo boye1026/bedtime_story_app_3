@@ -32,10 +32,6 @@ class TTSService {
       await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0);
 
-      // Android 特定设置
-      await _flutterTts.androidSetSpeechRate(0.5);
-      await _flutterTts.androidSetPitch(1.0);
-
       // 等待说话完成
       await _flutterTts.awaitSpeakCompletion(true);
 
@@ -110,7 +106,13 @@ class TTSService {
       } else {
         _isSpeaking = false;
         // 尝试使用默认语言
-        await _flutterTts.setLanguage(null);
+        try {
+          // 获取可用语言并选择第一个
+          final languages = await _flutterTts.getLanguages as List?;
+          if (languages != null && languages.isNotEmpty) {
+            await _flutterTts.setLanguage(languages.first.toString());
+          }
+        } catch (_) {}
         final retryResult = await _flutterTts.speak(text);
         return retryResult == 1 || retryResult == true;
       }
@@ -144,7 +146,6 @@ class TTSService {
     try {
       final clampedRate = rate.clamp(0.1, 2.0);
       await _flutterTts.setSpeechRate(clampedRate);
-      await _flutterTts.androidSetSpeechRate(clampedRate);
     } catch (e) {
       debugPrint('TTS setSpeechRate error: $e');
     }
@@ -154,7 +155,6 @@ class TTSService {
     try {
       final clampedPitch = pitch.clamp(0.5, 2.0);
       await _flutterTts.setPitch(clampedPitch);
-      await _flutterTts.androidSetPitch(clampedPitch);
     } catch (e) {
       debugPrint('TTS setPitch error: $e');
     }
