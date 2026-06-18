@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/tts_service.dart';
-import '../services/api_service.dart';
 
 class StoryDetailPage extends StatefulWidget {
   final String title;
@@ -23,129 +22,38 @@ class StoryDetailPage extends StatefulWidget {
 class _StoryDetailPageState extends State<StoryDetailPage> {
   final TTSService _ttsService = TTSService();
   bool _isSpeaking = false;
-  bool _isLoading = false;
-  String? _errorMsg;
 
   @override
   void initState() {
     super.initState();
-    _initTTS();
-  }
-
-  Future<void> _initTTS() async {
-    try {
-      // 先设置事件处理器，再初始化
-      _ttsService.onStart = () {
-      if (mounted) {
-        setState(() => _isSpeaking = true);
-      }
+    _ttsService.onStart = () {
+      if (mounted) setState(() => _isSpeaking = true);
     };
-      _ttsService.onComplete = () {
-      if (mounted) {
-        setState(() => _isSpeaking = false);
-      }
+    _ttsService.onComplete = () {
+      if (mounted) setState(() => _isSpeaking = false);
     };
-      _ttsService.onError = (msg) {
-      if (mounted) {
-        setState(() {
-          _isSpeaking = false;
-          _errorMsg = msg;
-        });
-      }
+    _ttsService.onCancel = () {
+      if (mounted) setState(() => _isSpeaking = false);
     };
-      _ttsService.onCancel = () {
-      if (mounted) {
-        setState(() => _isSpeaking = false);
-      }
+    _ttsService.onError = (_) {
+      if (mounted) setState(() => _isSpeaking = false);
     };
-    await _ttsService.init();
-  } catch (e) {
-    debugPrint('TTS Init Error: $e');
-    }
+    _ttsService.init();
   }
 
   @override
   void dispose() {
-    try {
-      _ttsService.stop();
-    } catch (_) {}
+    _ttsService.stop();
     super.dispose();
   }
 
   Future<void> _toggleSpeak() async {
     if (_isSpeaking) {
       await _ttsService.stop();
-      if (mounted) {
-        setState(() => _isSpeaking = false);
-      }
-      return;
-    }
-
-    // 检查会员限制
-    try {
-      final api = ApiService();
-      final status = await api.getVipStatus();
-      final dynamic dataRaw = status['data'];
-      final Map<String, dynamic>? data = dataRaw as Map<String, dynamic>?;
-      final dynamic isVipRaw = data?['is_vip'];
-      final bool isVip = isVipRaw == true;
-      final dynamic remainingRaw = data?['remaining_free_listen'];
-      final int remaining = remainingRaw is int ? remainingRaw : 3;
-
-      if (!isVip && remaining <= 0) {
-        _showVipModal();
-        return;
-      }
-
-      if (!isVip) {
-        await api.recordListen();
-      }
-    } catch (e) {
-      // 即使检查失败也继续朗读
-    }
-
-    // 播放
-    try {
-      if (mounted) setState(() => _isLoading = true);
+      if (mounted) setState(() => _isSpeaking = false);
+    } else {
       await _ttsService.speak(widget.content);
-    } catch (e) {
-      debugPrint('朗读出错: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
     }
-  }
-
-  Future<void> _stopSpeak() async {
-    await _ttsService.stop();
-    if (mounted) {
-      setState(() => _isSpeaking = false);
-    }
-  }
-
-  void _showVipModal() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('✨ 开通会员'),
-        content: const Text('免费故事已听完，开通会员可无限收听所有故事！\n\n还可以无限次AI生成专属故事哦～'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('稍后再说'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.pushNamed(context, '/membership');
-            },
-            child: const Text('立即开通'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -185,13 +93,13 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
                     size: 44,
                     color: const Color(0xFF6C63FF),
                   ),
-                  onPressed: _isLoading ? null : _toggleSpeak,
+                  onPressed: _toggleSpeak,
                 ),
-                IconButton(
-                  icon: const Icon(Icons.stop_circle,
-                      size: 36, color: Color(0xFFFF7675)),
-                  onPressed: _isSpeaking ? _stopSpeak : null,
-                ),
+                if (_isSpeaking)
+                  IconButton(
+                    icon: const Icon(Icons.stop_circle, size: 36, color: Color(0xFFFF7675)),
+                    onPressed: _toggleSpeak,
+                  ),
               ],
             ),
           ),

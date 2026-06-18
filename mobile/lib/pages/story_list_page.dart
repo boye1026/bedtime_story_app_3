@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/tts_service.dart';
-import '../theme/app_colors.dart';
+import 'story_detail_page.dart';
 
 class StoryListPage extends StatefulWidget {
   const StoryListPage({super.key});
@@ -11,188 +10,131 @@ class StoryListPage extends StatefulWidget {
 }
 
 class _StoryListPageState extends State<StoryListPage> {
-  List<Map<String, String>> _savedStories = [];
-  final TTSService _ttsService = TTSService();
-  int _playingIndex = -1;
+  List<String> _stories = [];
 
   @override
   void initState() {
     super.initState();
-    _initTTS();
     _loadStories();
   }
 
-  @override
-  void dispose() {
-    _ttsService.stop();
-    super.dispose();
-  }
-
-  Future<void> _initTTS() async {
-    _ttsService.onStart = () {
-      if (mounted) setState(() {});
-    };
-    _ttsService.onComplete = () {
-      if (mounted) setState(() => _playingIndex = -1);
-    };
-    _ttsService.onCancel = () {
-      if (mounted) setState(() => _playingIndex = -1);
-    };
-    _ttsService.onError = (msg) {
-      if (mounted) setState(() => _playingIndex = -1);
-    };
-    await _ttsService.init();
-  }
-
   Future<void> _loadStories() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final rawList = prefs.getStringList('saved_stories') ?? [];
-      final parsedList = rawList.map((raw) {
-        final parts = raw.split('||');
-        return {
-          'title': parts.isNotEmpty ? parts[0] : '未命名故事',
-          'content': parts.length > 1 ? parts[1] : '',
-        };
-      }).toList();
-      setState(() => _savedStories = parsedList);
-    } catch (e) {
-      debugPrint('加载故事失败: $e');
-    }
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _stories = prefs.getStringList('saved_stories') ?? [];
+    });
   }
 
   Future<void> _deleteStory(int index) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final newList = List<String>.from(prefs.getStringList('saved_stories') ?? []);
-      if (index < newList.length) {
-        newList.removeAt(index);
-        await prefs.setStringList('saved_stories', newList);
-      }
-      await _loadStories();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('故事已删除'));
-      }
-    } catch (e) {
-      debugPrint('删除故事失败: $e');
-    }
-  }
-
-  Future<void> _togglePlay(String content, int index) async {
-    if (_playingIndex == index) {
-      await _ttsService.stop();
-      if (mounted) setState(() => _playingIndex = -1);
-    } else {
-      await _ttsService.stop();
-      setState(() => _playingIndex = index);
-      await _ttsService.speak(content);
-      if (mounted) setState(() {
-        _playingIndex = _ttsService.isSpeaking ? index : -1;
-      });
-    }
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _stories.removeAt(index);
+      prefs.setStringList('saved_stories', _stories);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFFFF8F0),
       appBar: AppBar(
-        title: const Text('我的故事库'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadStories,
-          ),
-        ],
+        title: const Text('故事列表'),
+        backgroundColor: const Color(0xFF6C63FF),
+        foregroundColor: Colors.white,
       ),
-      body: _savedStories.isEmpty
+      body: _stories.isEmpty
           ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.book, size: 80, color: AppColors.primary.withOpacity(0.3)),
-                    const SizedBox(height: 16),
-                    const Text('还没有收藏的故事', style: TextStyle(fontSize: 16)),
-                    const SizedBox(height: 8),
-                    Text('去「生成故事」页面创作你的第一个故事吧',
-                        style: TextStyle(fontSize: 14, color: Colors.grey.shade600)),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, '/setup'),
-                      child: const Text('去生成故事'),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.library_books_outlined,
+                    size: 72,
+                    color: Color(0xFF6C63FF),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '暂无故事，快去首页生成一个吧',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[500],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             )
           : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _savedStories.length,
+              itemCount: _stories.length,
               itemBuilder: (context, index) {
-                final story = _savedStories[index];
-                final title = story['title'] ?? '未命名故事';
-                final content = story['content'] ?? '';
-                final isPlaying = _playingIndex == index;
+                final parts = _stories[index].split('||');
+                if (parts.length < 2) return const SizedBox.shrink();
+                final title = parts[0];
+                final content = parts.sublist(1).join('||');
 
                 return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.08),
+                        color: Colors.grey.withOpacity(0.15),
                         blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  child: ExpansionTile(
-                    leading: Container(
-                      width: 45,
-                      height: 45,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        isPlaying ? Icons.volume_up : Icons.auto_stories,
-                        color: AppColors.primary,
-                      ),
+                  child: ListTile(
+                    leading: const Icon(Icons.bookmark, color: Color(0xFF6C63FF), size: 28),
+                    title: Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('${content.length} 字',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            isPlaying ? Icons.stop : Icons.play_arrow,
-                            color: AppColors.primary,
+                    subtitle: Text(
+                      content.length > 60 ? '${content.substring(0, 60)}...' : content,
+                      maxLines: 2,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Color(0xFFFF7675)),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('确认删除'),
+                            content: const Text('确定要删除这个故事吗？'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('取消'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFF7675),
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('删除'),
+                              ),
+                            ],
                           ),
-                          onPressed: () => _togglePlay(content, index),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
-                          onPressed: () => _deleteStory(index),
-                        ),
-                      ],
+                        );
+                        if (confirm == true) _deleteStory(index);
+                      },
                     ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            const Divider(),
-                            const SizedBox(height: 8),
-                            Text(content, style: const TextStyle(height: 1.6)),
-                          ],
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => StoryDetailPage(
+                            title: title,
+                            content: content,
+                            category: '收藏',
+                            categoryIcon: '⭐',
+                          ),
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 );
               },
