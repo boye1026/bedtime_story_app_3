@@ -92,12 +92,38 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
         interests: _interests,
         style: _selectedStyle,
       );
-      
+
+      final dynamic codeRaw = response['code'];
+      final int code = codeRaw is int ? codeRaw : 200;
+      if (code == 403) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showMessage('免费次数已用完，请开通会员');
+        }
+        return;
+      }
+
+      final dynamic dataRaw = response['data'];
+      final Map<String, dynamic>? data = dataRaw is Map ? Map<String, dynamic>.from(dataRaw) : null;
+
       if (mounted) {
-        setState(() {
-          _generatedStory = response['content'] ?? response['story'] ?? '生成失败，请重试';
-          _isLoading = false;
-        });
+        if (data != null) {
+          final dynamic titleRaw = data['title'];
+          final dynamic contentRaw = data['content'];
+          final String title = titleRaw is String ? titleRaw : '';
+          final String content = contentRaw is String ? contentRaw : '';
+          setState(() {
+            _generatedStory = title.isNotEmpty ? '$title\n\n$content' : content;
+            _isLoading = false;
+          });
+        } else {
+          final dynamic msgRaw = response['message'];
+          final String msg = msgRaw is String ? msgRaw : '生成失败，请重试';
+          setState(() {
+            _generatedStory = msg;
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -271,7 +297,7 @@ class _StoryGeneratePageState extends State<StoryGeneratePage> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _generateStory,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),

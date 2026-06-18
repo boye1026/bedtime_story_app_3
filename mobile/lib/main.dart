@@ -36,7 +36,7 @@ class BedtimeStoryApp extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
         ),
-        cardTheme: const CardThemeData(
+        cardTheme: CardTheme(
           color: AppColors.cardBackground,
           elevation: 2,
           shape: RoundedRectangleBorder(
