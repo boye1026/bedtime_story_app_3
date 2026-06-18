@@ -125,10 +125,25 @@ class _ProfilePageState extends State<ProfilePage> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFE4E1), Color(0xFFFFB6C1)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.pink.withOpacity(0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.person, size: 40, color: AppColors.primary),
+                      child: const Icon(
+                        Icons.child_care,
+                        size: 40,
+                        color: Color(0xFFE91E63),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(

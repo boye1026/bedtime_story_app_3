@@ -1,9 +1,17 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
+import '../data/built_in_stories.dart';
 import '../theme/app_colors.dart';
 import '../widgets/star_animation.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
+
+  List<BuiltInStory> _getRandomStories() {
+    final random = Random();
+    final shuffled = List<BuiltInStory>.from(builtInStories)..shuffle(random);
+    return shuffled.take(3).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,23 +180,7 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildRecommendedStories(BuildContext context) {
-    final List<Map<String, dynamic>> stories = [
-      {
-        'title': '勇敢的小兔子',
-        'description': '教会孩子勇敢面对困难',
-        'icon': Icons.auto_stories,
-      },
-      {
-        'title': '星星的魔法',
-        'description': '温馨的睡前童话',
-        'icon': Icons.star,
-      },
-      {
-        'title': '小熊猫的冒险',
-        'description': '充满探索精神的旅程',
-        'icon': Icons.forest,
-      },
-    ];
+    final randomStories = _getRandomStories();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,13 +188,13 @@ class HomePage extends StatelessWidget {
         const Text('📖 推荐故事',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
-        ...stories.map((story) => Padding(
+        ...randomStories.map((story) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _buildStoryCard(
                 context,
-                title: story['title'] as String,
-                description: story['description'] as String,
-                icon: story['icon'] as IconData,
+                title: story.title,
+                description: story.summary,
+                categoryIcon: story.categoryIcon,
               ),
             )),
       ],
@@ -212,10 +204,13 @@ class HomePage extends StatelessWidget {
   Widget _buildStoryCard(BuildContext context,
       {required String title,
       required String description,
-      required IconData icon}) {
+      String? categoryIcon}) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/setup');
+        Navigator.pushNamed(context, '/story-detail', arguments: {
+          'title': title,
+          'content': description,
+        });
       },
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -239,7 +234,12 @@ class HomePage extends StatelessWidget {
                 color: AppColors.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppColors.primary),
+              child: Center(
+                child: Text(
+                  categoryIcon ?? '📚',
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

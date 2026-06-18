@@ -18,33 +18,33 @@ class ApiService {
   // 或使用实际部署的URL
   // static const String _baseUrl = 'https://your-domain.com/api';
 
-  /// 发送短信验证码
+  /// 发送短信验证码 - 模拟模式
   Future<Map<String, dynamic>> sendSmsCode(String phone) async {
-    try {
-      final response = await _dio.post(
-        '$_baseUrl/auth/send_sms_code',
-        data: {'phone': phone},
-      );
-
-      return response.data;
-    } catch (e) {
-      debugPrint('发送验证码失败: $e');
-      return {'code': 200, 'message': '验证码已发送（模拟）', 'data': null};
-    }
+    await Future.delayed(const Duration(milliseconds: 500));
+    debugPrint('发送验证码到手机号: $phone');
+    return {
+      'code': 200,
+      'message': '验证码已发送，有效期5分钟',
+      'data': {'code': '123456'}
+    };
   }
 
-  /// 验证短信验证码
+  /// 验证短信验证码 - 模拟模式
   Future<Map<String, dynamic>> verifySmsCode(String phone, String code) async {
-    try {
-      final response = await _dio.post(
-        '$_baseUrl/auth/verify_sms_code',
-        data: {'phone': phone, 'code': code},
-      );
-
-      return response.data;
-    } catch (e) {
-      debugPrint('验证验证码失败: $e');
-      return {'code': 500, 'message': '网络错误', 'data': null};
+    await Future.delayed(const Duration(milliseconds: 500));
+    debugPrint('验证手机号: $phone, 验证码: $code');
+    if (code == '123456') {
+      return {
+        'code': 200,
+        'message': '登录成功',
+        'data': {
+          'id': 'user_${phone.substring(phone.length - 4)}',
+          'phone': phone,
+          'nickname': '小读者'
+        }
+      };
+    } else {
+      return {'code': 400, 'message': '验证码错误', 'data': null};
     }
   }
 

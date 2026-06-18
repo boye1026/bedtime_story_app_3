@@ -72,14 +72,22 @@ class _StoryLibraryPageState extends State<StoryLibraryPage> {
         onSelected: (_) {
           setState(() => _selectedCategory = category);
         },
-        backgroundColor: Colors.white.withOpacity(0.2),
+        backgroundColor: Colors.white.withOpacity(0.3),
         selectedColor: Colors.white,
         labelStyle: TextStyle(
           color: isSelected ? const Color(0xFF6C63FF) : Colors.white,
           fontSize: 14,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        showCheckmark: false,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: isSelected ? const Color(0xFF6C63FF) : Colors.white.withOpacity(0.5),
+            width: 1.5,
+          ),
+        ),
       ),
     );
   }

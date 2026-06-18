@@ -18,7 +18,6 @@ class TTSService {
   Future<void> init() async {
     if (_isInitialized) return;
     try {
-      // 设置 Android 选项
       await _flutterTts.setSharedInstance(true);
       await _flutterTts.setIosAudioCategory(IosTextToSpeechAudioCategory.playback, [
         IosTextToSpeechAudioCategoryOptions.allowBluetooth,
@@ -26,24 +25,45 @@ class TTSService {
         IosTextToSpeechAudioCategoryOptions.mixWithOthers,
       ], IosTextToSpeechAudioMode.voicePrompt);
 
-      // 设置中文女性声音参数
-      // 语速稍慢，适合睡前故事
+      // 芒果姐姐风格 - 温柔、亲切的女性讲故事声音
       await _flutterTts.setLanguage('zh-CN');
-      await _flutterTts.setSpeechRate(0.45); // 稍慢的语速，更有感情
-      await _flutterTts.setPitch(1.15); // 略高的音调，模拟女性温柔声音
-      await _flutterTts.setVolume(0.9);
+      await _flutterTts.setSpeechRate(0.42); // 较慢的语速，像姐姐讲故事
+      await _flutterTts.setPitch(1.25); // 较高的音调，模拟年轻女性声音
+      await _flutterTts.setVolume(0.95);
 
-      // 尝试选择女性声音引擎
+      // 尝试选择中文女性声音
+      try {
+        final voices = await _flutterTts.getVoices;
+        debugPrint('Available voices: $voices');
+        if (voices != null && voices is List) {
+          for (final voice in voices) {
+            final voiceStr = voice.toString().toLowerCase();
+            if (voiceStr.contains('zh') && 
+                (voiceStr.contains('female') || voiceStr.contains('xiaoxiao') || 
+                 voiceStr.contains('jingjing') || voiceStr.contains('lili'))) {
+              await _flutterTts.setVoice(voice);
+              debugPrint('Selected voice: $voice');
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Setting voice failed: $e');
+      }
+
+      // 尝试选择支持中文女性声音的引擎
       try {
         final engines = await _flutterTts.getEngines;
         debugPrint('Available TTS engines: $engines');
-        // 优先选择支持女性声音的引擎
         if (engines != null && engines is List) {
           for (final engine in engines) {
-            if (engine.toString().contains('google') || 
-                engine.toString().contains('xiaomi') ||
-                engine.toString().contains('iflytek')) {
+            final engineStr = engine.toString().toLowerCase();
+            if (engineStr.contains('google') || 
+                engineStr.contains('xiaomi') ||
+                engineStr.contains('iflytek') ||
+                engineStr.contains('baidu')) {
               await _flutterTts.setEngine(engine.toString());
+              debugPrint('Selected engine: $engine');
               break;
             }
           }
