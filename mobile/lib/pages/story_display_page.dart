@@ -134,7 +134,15 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
       await _ttsService.stop();
       if (mounted) setState(() => _isPlaying = false);
     } else {
-      await _ttsService.speak(_storyContent);
+      final success = await _ttsService.speak(_storyContent);
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('语音播放失败，请检查TTS引擎设置'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 

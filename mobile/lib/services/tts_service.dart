@@ -18,18 +18,30 @@ class TTSService {
   Future<void> init() async {
     if (_isInitialized) return;
     try {
+      // 设置 Android 选项
+      await _flutterTts.setSharedInstance(true);
+      await _flutterTts.setIosAudioCategory(IosTextToSpeechAudioCategory.playback, [
+        IosTextToSpeechAudioCategoryOptions.allowBluetooth,
+        IosTextToSpeechAudioCategoryOptions.allowBluetoothA2DP,
+        IosTextToSpeechAudioCategoryOptions.mixWithOthers,
+      ], IosTextToSpeechAudioMode.voicePrompt);
+
+      // 设置语言
       await _flutterTts.setLanguage('zh-CN');
-      await _flutterTts.setSpeechRate(0.45);
-      await _flutterTts.setPitch(1.1);
+      await _flutterTts.setSpeechRate(0.5);
+      await _flutterTts.setPitch(1.0);
       await _flutterTts.setVolume(1.0);
 
-      try {
-        if (defaultTargetPlatform == TargetPlatform.android) {
-          await _flutterTts.awaitSpeakCompletion(true);
-        }
-      } catch (_) {}
+      // Android 特定设置
+      await _flutterTts.androidSetSpeechRate(0.5);
+      await _flutterTts.androidSetPitch(1.0);
 
+      // 等待说话完成
+      await _flutterTts.awaitSpeakCompletion(true);
+
+      // 设置事件处理器
       _flutterTts.setStartHandler(() {
+        debugPrint('TTS Start');
         _isSpeaking = true;
         if (onStart != null) {
           try { onStart!(); } catch (_) {}
@@ -37,6 +49,7 @@ class TTSService {
       });
 
       _flutterTts.setCompletionHandler(() {
+        debugPrint('TTS Complete');
         _isSpeaking = false;
         if (onComplete != null) {
           try { onComplete!(); } catch (_) {}
@@ -44,6 +57,7 @@ class TTSService {
       });
 
       _flutterTts.setErrorHandler((msg) {
+        debugPrint('TTS Error: $msg');
         _isSpeaking = false;
         if (onError != null) {
           try { onError!(msg.toString()); } catch (_) {}
@@ -51,34 +65,59 @@ class TTSService {
       });
 
       _flutterTts.setCancelHandler(() {
+        debugPrint('TTS Cancel');
         _isSpeaking = false;
         if (onCancel != null) {
           try { onCancel!(); } catch (_) {}
         }
       });
 
+      // 检查可用的语言
+      final languages = await _flutterTts.getLanguages;
+      debugPrint('Available languages: $languages');
+
       _isInitialized = true;
+      debugPrint('TTS 初始化完成');
     } catch (e) {
-      debugPrint('TTS初始化异常: $e');
+      debugPrint('TTS 初始化异常: $e');
     }
   }
 
-  Future<void> speak(String text) async {
-    if (text.isEmpty) return;
+  Future<bool> speak(String text) async {
+    if (text.isEmpty) return false;
+
     try {
       await init();
-      // 先停止之前的朗读
-      try { await _flutterTts.stop(); } catch (_) {}
+
+      // 停止之前的朗读
+      await _flutterTts.stop();
 
       _isSpeaking = true;
-      final dynamic result = await _flutterTts.speak(text);
-      final success = result == 1 || result == true;
-      if (!success) {
+
+      // 尝试设置中文语言，如果失败则使用默认
+      final languages = await _flutterTts.getLanguages as List?;
+      if (languages != null && languages.contains('zh-CN')) {
+        await _flutterTts.setLanguage('zh-CN');
+      } else if (languages != null && languages.contains('zh')) {
+        await _flutterTts.setLanguage('zh');
+      }
+
+      final result = await _flutterTts.speak(text);
+      debugPrint('TTS speak result: $result');
+
+      if (result == 1 || result == true) {
+        return true;
+      } else {
         _isSpeaking = false;
+        // 尝试使用默认语言
+        await _flutterTts.setLanguage(null);
+        final retryResult = await _flutterTts.speak(text);
+        return retryResult == 1 || retryResult == true;
       }
     } catch (e) {
-      _isSpeaking = false;
       debugPrint('TTS speak error: $e');
+      _isSpeaking = false;
+      return false;
     }
   }
 
@@ -86,13 +125,16 @@ class TTSService {
     try {
       _isSpeaking = false;
       await _flutterTts.stop();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('TTS stop error: $e');
+    }
   }
 
   Future<void> pause() async {
     try {
       await _flutterTts.pause();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('TTS pause error: $e');
       // 如果平台不支持 pause, 则停止
       await stop();
     }
@@ -100,20 +142,30 @@ class TTSService {
 
   Future<void> setSpeechRate(double rate) async {
     try {
-      await _flutterTts.setSpeechRate(rate.clamp(0.1, 2.0));
-    } catch (_) {}
+      final clampedRate = rate.clamp(0.1, 2.0);
+      await _flutterTts.setSpeechRate(clampedRate);
+      await _flutterTts.androidSetSpeechRate(clampedRate);
+    } catch (e) {
+      debugPrint('TTS setSpeechRate error: $e');
+    }
   }
 
   Future<void> setPitch(double pitch) async {
     try {
-      await _flutterTts.setPitch(pitch.clamp(0.5, 2.0));
-    } catch (_) {}
+      final clampedPitch = pitch.clamp(0.5, 2.0);
+      await _flutterTts.setPitch(clampedPitch);
+      await _flutterTts.androidSetPitch(clampedPitch);
+    } catch (e) {
+      debugPrint('TTS setPitch error: $e');
+    }
   }
 
   Future<void> setVolume(double volume) async {
     try {
       await _flutterTts.setVolume(volume.clamp(0.0, 1.0));
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('TTS setVolume error: $e');
+    }
   }
 
   bool get isSpeaking => _isSpeaking;
