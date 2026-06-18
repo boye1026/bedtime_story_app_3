@@ -24,17 +24,24 @@ class _StoryListPageState extends State<StoryListPage> {
 
   @override
   void dispose() {
-    _ttsService.dispose();
+    _ttsService.stop();
     super.dispose();
   }
 
   Future<void> _initTTS() async {
-    await _ttsService.init();
-    _ttsService.onComplete = () {
-      if (mounted) {
-        setState(() => _playingIndex = -1);
-      }
+    _ttsService.onStart = () {
+      if (mounted) setState(() {});
     };
+    _ttsService.onComplete = () {
+      if (mounted) setState(() => _playingIndex = -1);
+    };
+    _ttsService.onCancel = () {
+      if (mounted) setState(() => _playingIndex = -1);
+    };
+    _ttsService.onError = (msg) {
+      if (mounted) setState(() => _playingIndex = -1);
+    };
+    await _ttsService.init();
   }
 
   Future<void> _loadStories() async {
@@ -64,7 +71,7 @@ class _StoryListPageState extends State<StoryListPage> {
       }
       await _loadStories();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('故事已删除')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('故事已删除'));
       }
     } catch (e) {
       debugPrint('删除故事失败: $e');
@@ -74,11 +81,14 @@ class _StoryListPageState extends State<StoryListPage> {
   Future<void> _togglePlay(String content, int index) async {
     if (_playingIndex == index) {
       await _ttsService.stop();
-      setState(() => _playingIndex = -1);
+      if (mounted) setState(() => _playingIndex = -1);
     } else {
       await _ttsService.stop();
-      await _ttsService.speak(content);
       setState(() => _playingIndex = index);
+      await _ttsService.speak(content);
+      if (mounted) setState(() {
+        _playingIndex = _ttsService.isSpeaking ? index : -1;
+      });
     }
   }
 

@@ -15,6 +15,8 @@ class _MembershipPageState extends State<MembershipPage> {
   String? _expireDate;
   bool _isLoading = true;
   String? _selectedPlan;
+  String? _selectedPayment; // wechat / alipay
+  bool _isProcessing = false;
 
   final ApiService _api = ApiService();
 
@@ -25,22 +27,30 @@ class _MembershipPageState extends State<MembershipPage> {
   }
 
   Future<void> _loadStatus() async {
-    final status = await _api.getVipStatus();
-    final dynamic dataRaw = status['data'];
-    final Map<String, dynamic>? data = dataRaw as Map<String, dynamic>?;
-    final dynamic isVipRaw = data?['is_vip'];
-    final dynamic remGenRaw = data?['remaining_free_generate'];
-    final dynamic remListenRaw = data?['remaining_free_listen'];
-    final dynamic expireRaw = data?['vip_expire_date'];
-    setState(() {
-      _isVip = isVipRaw == true;
-      _remainingGenerate = remGenRaw is int ? remGenRaw : 3;
-      if (_remainingGenerate < 0) _remainingGenerate = 0;
-      _remainingListen = remListenRaw is int ? remListenRaw : 3;
-      if (_remainingListen < 0) _remainingListen = 0;
-      _expireDate = expireRaw is String ? expireRaw : null;
-      _isLoading = false;
-    });
+    try {
+      final status = await _api.getVipStatus();
+      final dynamic dataRaw = status['data'];
+      final Map<String, dynamic>? data = dataRaw as Map<String, dynamic>?;
+      final dynamic isVipRaw = data?['is_vip'];
+      final dynamic remGenRaw = data?['remaining_free_generate'];
+      final dynamic remListenRaw = data?['remaining_free_listen'];
+      final dynamic expireRaw = data?['vip_expire_date'];
+      if (mounted) {
+        setState(() {
+          _isVip = isVipRaw == true;
+          _remainingGenerate = remGenRaw is int ? remGenRaw : 3;
+          if (_remainingGenerate < 0) _remainingGenerate = 0;
+          _remainingListen = remListenRaw is int ? remListenRaw : 3;
+          if (_remainingListen < 0) _remainingListen = 0;
+          _expireDate = expireRaw is String ? expireRaw : null;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -73,27 +83,62 @@ class _MembershipPageState extends State<MembershipPage> {
                   const SizedBox(height: 20),
 
                   if (!_isVip) ...[
-                    ...plans.map((plan) {
-                      final isSelected = _selectedPlan == plan['plan_type'];
-                      return _buildPlanCard(plan, isSelected);
-                    }),
-                    const SizedBox(height: 16),
-                    if (_selectedPlan != null)
+                    // 套餐选择
+                    const Text(
+                      '选择套餐',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    ...plans.map((plan) => _buildPlanCard(plan, plan['plan_type'] == _selectedPlan)),
+                    const SizedBox(height: 24),
+
+                    // 支付方式选择
+                    const Text(
+                      '选择支付方式',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildPaymentOption(
+                      'wechat',
+                      '微信支付',
+                      '💚',
+                      Colors.green.shade600,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildPaymentOption(
+                      'alipay',
+                      '支付宝',
+                      '💙',
+                      Colors.blue.shade600,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // 开通按钮
+                    if (_selectedPlan != null && _selectedPayment != null)
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFFA500),
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
                             elevation: 4,
                           ),
-                          onPressed: () async {
-                            await _api.activateVip(_selectedPlan!);
-                            _showSuccess();
-                            _loadStatus();
-                          },
-                          child: const Text('✨ 立即开通', style: TextStyle(fontSize: 18)),
+                          onPressed: _isProcessing ? null : _handlePayment,
+                          child: _isProcessing
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  '✨ 开通${_planName(_selectedPlan)}',
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
                         ),
                       ),
                   ],
@@ -101,6 +146,19 @@ class _MembershipPageState extends State<MembershipPage> {
               ),
             ),
     );
+  }
+
+  String _planName(String? planType) {
+    switch (planType) {
+      case 'monthly':
+        return '月度会员';
+      case 'quarterly':
+        return '季度会员';
+      case 'yearly':
+        return '年度会员';
+      default:
+        return '会员';
+    }
   }
 
   Widget _buildStatusCard() {
@@ -229,11 +287,10 @@ class _MembershipPageState extends State<MembershipPage> {
     } else {
       price = double.tryParse(priceValue.toString()) ?? 0.0;
     }
-    final planType = plan['plan_type']?.toString() ?? '';
 
     return GestureDetector(
       onTap: () {
-        setState(() => _selectedPlan = planType);
+        setState(() => _selectedPlan = plan['plan_type']?.toString());
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -258,20 +315,29 @@ class _MembershipPageState extends State<MembershipPage> {
                   Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                  const SizedBox(height: 8),
-                  Text('¥${price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D))),
                 ],
               ),
             ),
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? const Color(0xFFFFA500) : Colors.white,
-                border: Border.all(color: const Color(0xFFFFA500)),
-              ),
-              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '¥${price.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFFFF6B9D)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected ? const Color(0xFFFFA500) : Colors.white,
+                    border: Border.all(color: const Color(0xFFFFA500), width: 2),
+                  ),
+                  child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+                ),
+              ],
             ),
           ],
         ),
@@ -279,19 +345,163 @@ class _MembershipPageState extends State<MembershipPage> {
     );
   }
 
-  void _showSuccess() {
+  Widget _buildPaymentOption(
+    String value,
+    String name,
+    String icon,
+    Color color,
+  ) {
+    final isSelected = _selectedPayment == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedPayment = value);
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.withOpacity(0.2),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: isSelected
+              ? [BoxShadow(color: color.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 2))]
+              : null,
+        ),
+        child: Row(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 28)),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                name,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+              ),
+            ),
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? color : Colors.white,
+                border: Border.all(color: color, width: 2),
+              ),
+              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 模拟支付流程
+  Future<void> _handlePayment() async {
+    if (_selectedPlan == null || _selectedPayment == null) return;
+
+    setState(() => _isProcessing = true);
+
+    try {
+      // 1. 显示支付中状态
+      _showProcessingDialog();
+
+      // 2. 模拟支付 (1.5 秒)
+      await Future.delayed(const Duration(milliseconds: 1500));
+
+      // 3. 调用后端 API 激活会员
+      if (mounted) Navigator.pop(context);
+      final result = await _api.activateVip(_selectedPlan!);
+
+      // 4. 检查结果
+      final dynamic codeRaw = result['code'];
+      final int code = codeRaw is int ? codeRaw : 200;
+
+      if (mounted) {
+        if (code == 200) {
+          _showSuccessDialog();
+        } else {
+          _showErrorDialog(result['message']?.toString() ?? '支付失败');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        _showErrorDialog('网络异常，请重试');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  void _showProcessingDialog() {
     showDialog(
       context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: Color(0xFF6C63FF),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _selectedPayment == 'wechat' ? '正在使用微信支付...' : '正在使用支付宝支付...',
+              style: const TextStyle(fontSize: 15),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('🎉 开通成功'),
+        title: Row(
+          children: const [
+            Icon(Icons.check_circle, color: Colors.green, size: 32),
+            SizedBox(width: 8),
+            Text('🎉 开通成功'),
+          ],
+        ),
         content: const Text('恭喜您！现在可以畅享所有故事啦～'),
         actions: [
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFFA500)),
             onPressed: () {
               Navigator.pop(ctx);
+              _loadStatus();
             },
             child: const Text('太棒了'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String msg) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('⚠️ 支付失败'),
+        content: Text(msg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('知道了'),
           ),
         ],
       ),

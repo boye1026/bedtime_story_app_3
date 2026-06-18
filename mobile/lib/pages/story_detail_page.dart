@@ -24,6 +24,7 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
   final TTSService _ttsService = TTSService();
   bool _isSpeaking = false;
   bool _isLoading = false;
+  String? _errorMsg;
 
   @override
   void initState() {
@@ -33,19 +34,33 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
 
   Future<void> _initTTS() async {
     try {
-      await _ttsService.init();
+      // 先设置事件处理器，再初始化
       _ttsService.onStart = () {
-        if (mounted) setState(() => _isSpeaking = true);
-      };
+      if (mounted) {
+        setState(() => _isSpeaking = true);
+      }
+    };
       _ttsService.onComplete = () {
-        if (mounted) setState(() => _isSpeaking = false);
-      };
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+      }
+    };
       _ttsService.onError = (msg) {
-        if (mounted) setState(() => _isSpeaking = false);
-        debugPrint('TTS Error: $msg');
-      };
-    } catch (e) {
-      debugPrint('TTS Init Error: $e');
+      if (mounted) {
+        setState(() {
+          _isSpeaking = false;
+          _errorMsg = msg;
+        });
+      }
+    };
+      _ttsService.onCancel = () {
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+      }
+    };
+    await _ttsService.init();
+  } catch (e) {
+    debugPrint('TTS Init Error: $e');
     }
   }
 
@@ -60,8 +75,14 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
   Future<void> _toggleSpeak() async {
     if (_isSpeaking) {
       await _ttsService.stop();
-      setState(() => _isSpeaking = false);
-    } else {
+      if (mounted) {
+        setState(() => _isSpeaking = false);
+      }
+      return;
+    }
+
+    // 检查会员限制
+    try {
       final api = ApiService();
       final status = await api.getVipStatus();
       final dynamic dataRaw = status['data'];
@@ -79,17 +100,27 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
       if (!isVip) {
         await api.recordListen();
       }
+    } catch (e) {
+      // 即使检查失败也继续朗读
+    }
 
-      try {
-        setState(() => _isLoading = true);
-        await _ttsService.speak(widget.content);
-      } catch (e) {
-        debugPrint('朗读出错: $e');
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
+    // 播放
+    try {
+      if (mounted) setState(() => _isLoading = true);
+      await _ttsService.speak(widget.content);
+    } catch (e) {
+      debugPrint('朗读出错: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _stopSpeak() async {
+    await _ttsService.stop();
+    if (mounted) {
+      setState(() => _isSpeaking = false);
     }
   }
 
@@ -99,9 +130,7 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('✨ 开通会员'),
-        content: const Text(
-          '免费故事已听完，开通会员可无限收听所有故事！\n\n还可以无限次AI生成专属故事哦～',
-        ),
+        content: const Text('免费故事已听完，开通会员可无限收听所有故事！\n\n还可以无限次AI生成专属故事哦～'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -158,14 +187,11 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
                   ),
                   onPressed: _isLoading ? null : _toggleSpeak,
                 ),
-                if (_isSpeaking)
-                  IconButton(
-                    icon: const Icon(Icons.stop_circle, size: 36, color: Color(0xFFFF7675)),
-                    onPressed: () async {
-                      await _ttsService.stop();
-                      setState(() => _isSpeaking = false);
-                    },
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.stop_circle,
+                      size: 36, color: Color(0xFFFF7675)),
+                  onPressed: _isSpeaking ? _stopSpeak : null,
+                ),
               ],
             ),
           ),

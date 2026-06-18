@@ -29,6 +29,7 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
   String _storyTitle = '';
   String _storyContent = '';
   bool _isPlaying = false;
+  double _speechRate = 0.5;
 
   @override
   void initState() {
@@ -44,17 +45,24 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
 
   @override
   void dispose() {
-    _ttsService.dispose();
+    _ttsService.stop();
     super.dispose();
   }
 
   Future<void> _initTTS() async {
-    await _ttsService.init();
-    _ttsService.onComplete = () {
-      if (mounted) {
-        setState(() => _isPlaying = false);
-      }
+    _ttsService.onStart = () {
+      if (mounted) setState(() => _isPlaying = true);
     };
+    _ttsService.onComplete = () {
+      if (mounted) setState(() => _isPlaying = false);
+    };
+    _ttsService.onCancel = () {
+      if (mounted) setState(() => _isPlaying = false);
+    };
+    _ttsService.onError = (msg) {
+      if (mounted) setState(() => _isPlaying = false);
+    };
+    await _ttsService.init();
   }
 
   /// 将中文风格名映射为英文后端风格名
@@ -74,7 +82,7 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
   }
 
   Future<void> _generateStory() async {
-    setState(() => _isLoading = true);
+    if (mounted) setState(() => _isLoading = true);
     try {
       final api = ApiService();
       final response = await api.generateStory(
@@ -127,19 +135,20 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
     }
   }
 
-  void _togglePlayback() async {
+  Future<void> _togglePlayback() async {
     if (_isPlaying) {
-      await _ttsService.pause();
-      setState(() => _isPlaying = false);
+      await _ttsService.stop();
+      if (mounted) setState(() => _isPlaying = false);
     } else {
+      if (mounted) setState(() => _isPlaying = true);
       await _ttsService.speak(_storyContent);
-      setState(() => _isPlaying = true);
+      if (mounted) setState(() => _isPlaying = _ttsService.isSpeaking);
     }
   }
 
-  void _stopPlayback() async {
+  Future<void> _stopPlayback() async {
     await _ttsService.stop();
-    setState(() => _isPlaying = false);
+    if (mounted) setState(() => _isPlaying = false);
   }
 
   Future<void> _saveStory() async {
@@ -232,21 +241,41 @@ class _StoryDisplayPageState extends State<StoryDisplayPage> {
                           bottom: BorderSide(color: Colors.grey.withOpacity(0.2), width: 0.5),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Column(
                         children: [
-                          IconButton(
-                            icon: Icon(
-                              _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                              size: 48,
-                              color: AppColors.primary,
-                            ),
-                            onPressed: _togglePlayback,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                                  size: 48,
+                                  color: AppColors.primary,
+                                ),
+                                onPressed: _togglePlayback,
+                              ),
+                              const SizedBox(width: 16),
+                              IconButton(
+                                icon: const Icon(Icons.stop_circle, size: 48, color: Colors.redAccent),
+                                onPressed: _stopPlayback,
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          IconButton(
-                            icon: const Icon(Icons.stop_circle, size: 48, color: Colors.redAccent),
-                            onPressed: _stopPlayback,
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text('语速', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              Slider(
+                                value: _speechRate,
+                                min: 0.2,
+                                max: 1.5,
+                                onChanged: (v) {
+                                  setState(() => _speechRate = v);
+                                  _ttsService.setSpeechRate(v);
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
