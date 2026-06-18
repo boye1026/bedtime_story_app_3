@@ -1,7 +1,7 @@
 ﻿import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// API 服务类 - 支持本地生成和后端API
@@ -11,6 +11,8 @@ class ApiService {
 
   ApiService._internal();
 
+  final Dio _dio = Dio();
+
   // 后端API基础URL（可根据环境配置）
   static const String _baseUrl = 'http://localhost:5000/api';
   // 或使用实际部署的URL
@@ -19,17 +21,14 @@ class ApiService {
   /// 发送短信验证码
   Future<Map<String, dynamic>> sendSmsCode(String phone) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/send_sms_code'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'phone': phone}),
+      final response = await _dio.post(
+        '$_baseUrl/auth/send_sms_code',
+        data: {'phone': phone},
       );
 
-      final data = jsonDecode(response.body);
-      return data;
+      return response.data;
     } catch (e) {
       debugPrint('发送验证码失败: $e');
-      // 网络错误时返回模拟成功，使用测试验证码
       return {'code': 200, 'message': '验证码已发送（模拟）', 'data': null};
     }
   }
@@ -37,17 +36,14 @@ class ApiService {
   /// 验证短信验证码
   Future<Map<String, dynamic>> verifySmsCode(String phone, String code) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/auth/verify_sms_code'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'phone': phone, 'code': code}),
+      final response = await _dio.post(
+        '$_baseUrl/auth/verify_sms_code',
+        data: {'phone': phone, 'code': code},
       );
 
-      final data = jsonDecode(response.body);
-      return data;
+      return response.data;
     } catch (e) {
       debugPrint('验证验证码失败: $e');
-      // 网络错误时返回失败
       return {'code': 500, 'message': '网络错误', 'data': null};
     }
   }
