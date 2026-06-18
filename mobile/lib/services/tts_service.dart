@@ -26,11 +26,31 @@ class TTSService {
         IosTextToSpeechAudioCategoryOptions.mixWithOthers,
       ], IosTextToSpeechAudioMode.voicePrompt);
 
-      // 设置语言
+      // 设置中文女性声音参数
+      // 语速稍慢，适合睡前故事
       await _flutterTts.setLanguage('zh-CN');
-      await _flutterTts.setSpeechRate(0.5);
-      await _flutterTts.setPitch(1.0);
-      await _flutterTts.setVolume(1.0);
+      await _flutterTts.setSpeechRate(0.45); // 稍慢的语速，更有感情
+      await _flutterTts.setPitch(1.15); // 略高的音调，模拟女性温柔声音
+      await _flutterTts.setVolume(0.9);
+
+      // 尝试选择女性声音引擎
+      try {
+        final engines = await _flutterTts.getEngines;
+        debugPrint('Available TTS engines: $engines');
+        // 优先选择支持女性声音的引擎
+        if (engines != null && engines is List) {
+          for (final engine in engines) {
+            if (engine.toString().contains('google') || 
+                engine.toString().contains('xiaomi') ||
+                engine.toString().contains('iflytek')) {
+              await _flutterTts.setEngine(engine.toString());
+              break;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Setting engine failed: $e');
+      }
 
       // 等待说话完成
       await _flutterTts.awaitSpeakCompletion(true);
@@ -68,12 +88,12 @@ class TTSService {
         }
       });
 
-      // 检查可用的语言
+      // 检查可用的语言和声音
       final languages = await _flutterTts.getLanguages;
       debugPrint('Available languages: $languages');
 
       _isInitialized = true;
-      debugPrint('TTS 初始化完成');
+      debugPrint('TTS 初始化完成 - 女性温柔声音模式');
     } catch (e) {
       debugPrint('TTS 初始化异常: $e');
     }

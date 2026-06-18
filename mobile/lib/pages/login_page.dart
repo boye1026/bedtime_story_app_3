@@ -1,7 +1,8 @@
-import 'dart:math';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
+import '../services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback? onLoginSuccess;
@@ -15,17 +16,19 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
+  final ApiService _apiService = ApiService();
 
   bool _isSendingCode = false;
   bool _isVerifying = false;
   bool _codeSent = false;
   int _countdown = 0;
-  String? _lastPhone;
+  Timer? _timer;
 
   @override
   void dispose() {
     _phoneController.dispose();
     _codeController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -48,66 +51,91 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() {
       _isSendingCode = true;
-      _lastPhone = phone;
     });
 
     try {
-      // 模拟发送验证码（实际项目中应调用后端API）
-      await Future.delayed(const Duration(seconds: 1));
+      // 调用后端API发送验证码
+      final result = await _apiService.sendSmsCode(phone);
 
-      // 生成6位验证码（实际项目中应由后端生成并发送）
-      final code = (Random().nextInt(900000) + 100000).toString();
+      if (result['code'] == 200) {
+        if (mounted) {
+          setState(() {
+            _isSendingCode = false;
+            _codeSent = true;
+            _countdown = 60;
+          });
 
-      // 模拟存储验证码到本地（实际项目中应存储在服务器端）
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('verification_code', code);
-      await prefs.setString('code_phone', phone);
-      await prefs.setString('code_expire', DateTime.now()
-          .add(const Duration(minutes: 5))
-          .toIso8601String());
+          // 启动倒计时
+          _startCountdown();
 
-      if (mounted) {
-        setState(() {
-          _isSendingCode = false;
-          _codeSent = true;
-          _countdown = 60;
-        });
-
-        // 启动倒计时
-        _startCountdown();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('验证码已发送: $code'), // 实际项目中应隐藏此提示
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('验证码已发送，有效期5分钟'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } else if (result['code'] == 429) {
+        if (mounted) {
+          setState(() {
+            _isSendingCode = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? '验证码已发送，请稍后再试'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isSendingCode = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? '发送失败'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isSendingCode = false;
         });
+        // 网络错误时，使用本地模拟验证码
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('发送失败: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
+            content: const Text('网络异常，使用测试验证码: 123456'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
           ),
         );
+        setState(() {
+          _codeSent = true;
+          _countdown = 60;
+        });
+        _startCountdown();
       }
     }
   }
 
   void _startCountdown() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
           _countdown--;
         });
+        if (_countdown <= 0) {
+          timer.cancel();
+        }
+      } else {
+        timer.cancel();
       }
-      return _countdown > 0;
     });
   }
 
@@ -140,56 +168,80 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // 模拟验证（实际项目中应调用后端API验证）
-      await Future.delayed(const Duration(seconds: 1));
+      // 调用后端API验证验证码
+      final result = await _apiService.verifySmsCode(phone, code);
 
-      // 实际项目中应从服务器验证，此处模拟验证通过
-      // 模拟存储用户登录状态
-      final prefs = await SharedPreferences.getInstance();
+      if (result['code'] == 200) {
+        final userData = result['data'];
+        final prefs = await SharedPreferences.getInstance();
 
-      // 生成简单的用户ID
-      final userId = 'user_${phone.substring(phone.length - 4)}';
+        // 保存登录状态
+        await prefs.setBool('is_logged_in', true);
+        await prefs.setString('user_phone', phone);
+        await prefs.setString('user_id', userData['id']?.toString() ?? 'user_${phone.substring(phone.length - 4)}');
+        await prefs.setString('user_nickname', userData['nickname'] ?? '小读者');
 
-      // 保存登录状态
-      await prefs.setBool('is_logged_in', true);
-      await prefs.setString('user_phone', phone);
-      await prefs.setString('user_id', userId);
-      await prefs.setString('user_nickname', '用户${phone.substring(phone.length - 4)}');
+        if (mounted) {
+          setState(() {
+            _isVerifying = false;
+          });
 
-      // 清除验证码
-      await prefs.remove('verification_code');
-      await prefs.remove('code_phone');
-      await prefs.remove('code_expire');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('登录成功！'),
+              backgroundColor: Colors.green,
+            ),
+          );
 
-      if (mounted) {
-        setState(() {
-          _isVerifying = false;
-        });
+          // 回调通知登录成功
+          widget.onLoginSuccess?.call();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('登录成功！'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // 回调通知登录成功
-        widget.onLoginSuccess?.call();
-
-        // 返回上一页
-        Navigator.of(context).pop();
+          // 返回上一页
+          Navigator.of(context).pop();
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isVerifying = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result['message'] ?? '验证失败'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isVerifying = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('验证失败: ${e.toString()}'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        // 网络错误时，允许使用测试验证码123456本地登录
+        if (code == '123456') {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('is_logged_in', true);
+          await prefs.setString('user_phone', phone);
+          await prefs.setString('user_id', 'user_${phone.substring(phone.length - 4)}');
+          await prefs.setString('user_nickname', '小读者');
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('登录成功！（离线模式）'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          widget.onLoginSuccess?.call();
+          Navigator.of(context).pop();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('网络异常，请使用测试验证码: 123456'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
     }
   }
@@ -277,10 +329,11 @@ class _LoginPageState extends State<LoginPage> {
                     fillColor: Colors.white,
                   ),
                   onChanged: (_) {
-                    if (_codeSent) {
+                    if (_codeSent && _phoneController.text.trim() != _phoneController.text.trim()) {
                       setState(() {
                         _codeSent = false;
                         _countdown = 0;
+                        _timer?.cancel();
                       });
                     }
                   },
@@ -329,7 +382,7 @@ class _LoginPageState extends State<LoginPage> {
                       ? null
                       : _sendVerificationCode,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _codeSent
+                    backgroundColor: _countdown > 0
                         ? Colors.grey[300]
                         : AppColors.primary,
                     shape: RoundedRectangleBorder(
@@ -348,9 +401,9 @@ class _LoginPageState extends State<LoginPage> {
                         )
                       : Text(
                           _countdown > 0 ? '${_countdown}秒后重试' : '获取验证码',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: Colors.white,
+                            color: _countdown > 0 ? Colors.grey[600] : Colors.white,
                           ),
                         ),
                 ),
@@ -361,9 +414,9 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _isVerifying ? null : _verifyCode,
+                  onPressed: _isVerifying || !_codeSent ? null : _verifyCode,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: _codeSent ? AppColors.primary : Colors.grey[300],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -378,11 +431,11 @@ class _LoginPageState extends State<LoginPage> {
                                 AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
+                      : Text(
                           '登录',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.white,
+                            color: _codeSent ? Colors.white : Colors.grey[600],
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -392,7 +445,7 @@ class _LoginPageState extends State<LoginPage> {
 
               // 提示
               Text(
-                '未注册用户将自动创建账号\n登录即表示同意《用户协议》和《隐私政策》',
+                '未注册用户将自动创建账号\n登录即表示同意《用户协议》和《隐私政策》\n测试验证码: 123456',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,

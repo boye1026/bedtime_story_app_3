@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
-import '../services/api_service.dart';
+import '../services/payment_service.dart';
 import '../services/auth_service.dart';
 import 'login_page.dart';
 
@@ -16,6 +16,7 @@ class _MembershipPageState extends State<MembershipPage> {
   String _selectedPayment = 'wechat';
   bool _isLoading = false;
   bool _isLoggedIn = false;
+  final PaymentService _paymentService = PaymentService();
 
   @override
   void initState() {
@@ -57,22 +58,12 @@ class _MembershipPageState extends State<MembershipPage> {
   }
 
   Future<void> _navigateToLogin() async {
-    final result = await Navigator.push<bool>(
+    await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (context) => const LoginPage()),
     );
 
-    if (result == true) {
-      await _checkLoginStatus();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('登录成功，请选择套餐'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
+    await _checkLoginStatus();
   }
 
   Future<void> _handlePurchase() async {
@@ -83,37 +74,49 @@ class _MembershipPageState extends State<MembershipPage> {
     }
 
     setState(() => _isLoading = true);
+
     try {
-      final api = ApiService();
-      await api.activateVip(_selectedPlan);
+      // 使用支付服务进行支付
+      final result = await _paymentService.pay(
+        paymentMethod: _selectedPayment,
+        plan: _selectedPlan,
+      );
 
-      // 更新本地VIP状态
-      DateTime? expireDate;
-      if (_selectedPlan == 'monthly') {
-        expireDate = DateTime.now().add(const Duration(days: 30));
+      if (result == PaymentService.PAY_SUCCESS) {
+        // 更新本地VIP状态
+        final days = PaymentService.planDays[_selectedPlan] ?? 30;
+        final expireDate = DateTime.now().add(Duration(days: days));
+        await AuthService().updateVipStatus(true, expireDate);
+
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ 支付成功！会员已激活'),
+              backgroundColor: Color(0xFF00B894),
+            ),
+          );
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) Navigator.pop(context, true);
+          });
+        }
       } else {
-        expireDate = DateTime.now().add(const Duration(days: 365));
-      }
-      await AuthService().updateVipStatus(true, expireDate);
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ 会员已激活！现在可以无限生成故事'),
-            backgroundColor: Color(0xFF00B894),
-          ),
-        );
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) Navigator.pop(context, true);
-        });
+        if (mounted) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('支付失败，请重试'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('激活失败：${e.toString()}'),
+            content: Text('支付异常：${e.toString()}'),
             backgroundColor: Colors.redAccent,
           ),
         );
