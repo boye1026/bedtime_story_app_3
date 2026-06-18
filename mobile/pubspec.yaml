@@ -1,4 +1,5 @@
 name: bedtime_story_app
+# AI 睡前故事生成器 - Flutter 移动应用
 description: AI 睡前故事应用 - 为孩子定制专属的睡前故事
 publish_to: 'none'
 version: 1.0.0+1
