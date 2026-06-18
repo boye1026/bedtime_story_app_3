@@ -1,7 +1,7 @@
 # 🌙 AI睡前故事生成器
 
-[![Backend CI](https://github.com/你的用户名/你的仓库名/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/你的用户名/你的仓库名/actions/workflows/backend-ci.yml)
-[![Flutter CI](https://github.com/你的用户名/你的仓库名/actions/workflows/flutter-ci.yml/badge.svg)](https://github.com/你的用户名/你的仓库名/actions/workflows/flutter-ci.yml)
+[![Backend CI](https://github.com/boye1026/bedtime_story_app_3/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/boye1026/bedtime_story_app_3/actions/workflows/backend-ci.yml)
+[![Flutter CI](https://github.com/boye1026/bedtime_story_app_3/actions/workflows/build-apk.yml/badge.svg)](https://github.com/boye1026/bedtime_story_app_3/actions/workflows/build-apk.yml)
 
 一款面向亲子的AI睡前故事生成应用，支持Android和iOS双平台。家长只需输入宝宝信息，即可通过云端AI生成专属睡前故事，并支持语音朗读。
 
